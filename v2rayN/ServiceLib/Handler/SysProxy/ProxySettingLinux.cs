@@ -1,5 +1,6 @@
 namespace ServiceLib.Handler.SysProxy;
 
+[SupportedOSPlatform("linux")]
 public static class ProxySettingLinux
 {
     private static readonly string _proxySetFileName = $"{Global.ProxySetLinuxShellFileName.Replace(Global.NamespaceSample, "")}.sh";
@@ -18,7 +19,7 @@ public static class ProxySettingLinux
 
     private static async Task ExecCmd(List<string> args)
     {
-        var customSystemProxyScriptPath = AppManager.Instance.Config.SystemProxyItem?.CustomSystemProxyScriptPath;
+        var customSystemProxyScriptPath = ConfigTextHandler.Config.SystemProxyItem?.CustomSystemProxyScriptPath;
         var fileName = (customSystemProxyScriptPath.IsNotEmpty() && File.Exists(customSystemProxyScriptPath))
             ? customSystemProxyScriptPath
             : await FileUtils.CreateLinuxShellFile(_proxySetFileName, EmbedUtils.GetEmbedText(Global.ProxySetLinuxShellFileName), false);

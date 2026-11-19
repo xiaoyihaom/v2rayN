@@ -3,6 +3,7 @@ namespace ServiceLib.Services;
 /// <summary>
 /// http://stackoverflow.com/questions/6266820/working-example-of-createjobobject-setinformationjobobject-pinvoke-in-net
 /// </summary>
+[SupportedOSPlatform("windows")]
 public sealed class WindowsJobService : IDisposable
 {
     private nint handle = nint.Zero;
@@ -23,15 +24,14 @@ public sealed class WindowsJobService : IDisposable
 
         try
         {
-            var length = Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION));
+            var length = Marshal.SizeOf<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>();
             extendedInfoPtr = Marshal.AllocHGlobal(length);
             Marshal.StructureToPtr(extendedInfo, extendedInfoPtr, false);
 
             if (!SetInformationJobObject(handle, JobObjectInfoType.ExtendedLimitInformation, extendedInfoPtr,
                     (uint)length))
             {
-                throw new Exception(string.Format("Unable to set information.  Error: {0}",
-                    Marshal.GetLastWin32Error()));
+                throw new Exception($"Unable to set information.  Error: {Marshal.GetLastWin32Error()}");
             }
         }
         finally

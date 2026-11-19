@@ -42,30 +42,27 @@ public class ShadowsocksFmt : BaseFmt
         //url = Utile.Base64Encode(url);
         //new Sip002
         var pw = Utils.Base64Encode($"{item.GetProtocolExtra().SsMethod}:{item.Password}", true);
+        var transport = item.GetTransportExtra();
 
         // plugin
         var plugin = string.Empty;
         var pluginArgs = string.Empty;
 
-        if (item.Network == nameof(ETransport.tcp) && item.HeaderType == Global.TcpHeaderHttp)
+        if (item.Network == nameof(ETransport.raw) && transport.RawHeaderType == Global.RawHeaderHttp)
         {
             plugin = "obfs-local";
-            pluginArgs = $"obfs=http;obfs-host={item.RequestHost};";
+            pluginArgs = $"obfs=http;obfs-host={transport.Host};";
         }
         else
         {
             if (item.Network == nameof(ETransport.ws))
             {
                 pluginArgs += "mode=websocket;";
-                pluginArgs += $"host={item.RequestHost};";
+                pluginArgs += $"host={transport.Host};";
                 // https://github.com/shadowsocks/v2ray-plugin/blob/e9af1cdd2549d528deb20a4ab8d61c5fbe51f306/args.go#L172
                 // Equal signs and commas [and backslashes] must be escaped with a backslash.
-                var path = item.Path.Replace("\\", "\\\\").Replace("=", "\\=").Replace(",", "\\,");
+                var path = (transport.Path ?? string.Empty).Replace("\\", "\\\\").Replace("=", "\\=").Replace(",", "\\,");
                 pluginArgs += $"path={path};";
-            }
-            else if (item.Network == nameof(ETransport.quic))
-            {
-                pluginArgs += "mode=quic;";
             }
             if (item.StreamSecurity == Global.StreamSecurity)
             {
@@ -168,7 +165,7 @@ public class ShadowsocksFmt : BaseFmt
                 return null;
             }
             item.SetProtocolExtra(item.GetProtocolExtra() with { SsMethod = userInfoParts.First() });
-            item.Password = Utils.UrlDecode(userInfoParts.Last());
+            item.Password = userInfoParts.Last();
         }
         else
         {
@@ -213,8 +210,11 @@ public class ShadowsocksFmt : BaseFmt
                 {
                     obfsHost = obfsHost.Replace("obfs-host=", "");
                     item.Network = Global.DefaultNetwork;
-                    item.HeaderType = Global.TcpHeaderHttp;
-                    item.RequestHost = obfsHost;
+                    item.SetTransportExtra(item.GetTransportExtra() with
+                    {
+                        RawHeaderType = Global.RawHeaderHttp,
+                        Host = obfsHost,
+                    });
                 }
             }
             // Parse v2ray-plugin
@@ -231,21 +231,20 @@ public class ShadowsocksFmt : BaseFmt
                 if (modeValue == "websocket")
                 {
                     item.Network = nameof(ETransport.ws);
+                    var t = item.GetTransportExtra();
                     if (!host.IsNullOrEmpty())
                     {
-                        item.RequestHost = host.Replace("host=", "");
-                        item.Sni = item.RequestHost;
+                        var wsHost = host.Replace("host=", "");
+                        t = t with { Host = wsHost };
+                        item.Sni = wsHost;
                     }
                     if (!path.IsNullOrEmpty())
                     {
                         var pathValue = path.Replace("path=", "");
                         pathValue = pathValue.Replace("\\=", "=").Replace("\\,", ",").Replace("\\\\", "\\");
-                        item.Path = pathValue;
+                        t = t with { Path = pathValue };
                     }
-                }
-                else if (modeValue == "quic")
-                {
-                    item.Network = nameof(ETransport.quic);
+                    item.SetTransportExtra(t);
                 }
 
                 if (hasTls)
@@ -283,7 +282,7 @@ public class ShadowsocksFmt : BaseFmt
     {
         //SsSIP008
         var lstSsServer = JsonUtils.Deserialize<List<SsServer>>(result);
-        if (lstSsServer?.Count <= 0)
+        if (lstSsServer == null || lstSsServer.Count == 0)
         {
             var ssSIP008 = JsonUtils.Deserialize<SsSIP008>(result);
             if (ssSIP008?.servers?.Count > 0)
@@ -302,7 +301,7 @@ public class ShadowsocksFmt : BaseFmt
                     Remarks = it.remarks,
                     Password = it.password,
                     Address = it.server,
-                    Port = it.server_port.ToInt()
+                    Port = it.server_port
                 };
                 ssItem.SetProtocolExtra(new ProtocolExtraItem() { SsMethod = it.method });
                 lst.Add(ssItem);

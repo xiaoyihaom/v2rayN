@@ -4,53 +4,42 @@ public static class ConnectionHandler
 {
     private static readonly string _tag = "ConnectionHandler";
 
-    public static async Task<string> RunAvailabilityCheck()
+    /// <summary>
+    /// Runs ping and IP checks.
+    /// </summary>
+    public static async Task<AvailabilityCheckResult> RunAvailabilityCheck()
     {
         var time = await GetRealPingTimeInfo();
-        var ip = time > 0 ? await GetIPInfo() ?? Global.None : Global.None;
+        var ip = time > 0 ? await GetIPInfo() : Global.None;
 
-        return string.Format(ResUI.TestMeOutput, time, ip);
+        return new AvailabilityCheckResult(time, ip);
     }
 
+    /// <summary>
+    /// Gets IP information using the default local proxy.
+    /// </summary>
     private static async Task<string?> GetIPInfo()
     {
-        var url = AppManager.Instance.Config.SpeedTestItem.IPAPIUrl;
-        if (url.IsNullOrEmpty())
+        using var downloadHandle = new DownloadService
         {
-            return null;
-        }
-
-        var downloadHandle = new DownloadService();
-        var result = await downloadHandle.TryDownloadString(url, true, "");
-        if (result == null)
-        {
-            return null;
-        }
-
-        var ipInfo = JsonUtils.Deserialize<IPAPIInfo>(result);
-        if (ipInfo == null)
-        {
-            return null;
-        }
-
-        var ip = ipInfo.ip ?? ipInfo.clientIp ?? ipInfo.ip_addr ?? ipInfo.query;
-        var country = ipInfo.country_code ?? ipInfo.country ?? ipInfo.countryCode ?? ipInfo.location?.country_code;
-
-        return $"({country ?? "unknown"}) {ip}";
+            Handler = HttpClientHelper.CreateSocketsHttpHandler(true, new()),
+            DisposeHandler = true,
+        };
+        var ipInfo = await GetIPInfo(downloadHandle);
+        return ipInfo?.ToString() ?? Global.None;
     }
 
+    /// <summary>
+    /// Measures real ping time using configured test URL.
+    /// </summary>
     private static async Task<int> GetRealPingTimeInfo()
     {
         var responseTime = -1;
         try
         {
-            var port = AppManager.Instance.GetLocalPort(EInboundProtocol.socks);
-            var webProxy = new WebProxy($"socks5://{Global.Loopback}:{port}");
-            var url = AppManager.Instance.Config.SpeedTestItem.SpeedPingTestUrl;
-
             for (var i = 0; i < 2; i++)
             {
-                responseTime = await GetRealPingTime(url, webProxy, 10);
+                responseTime = await GetRealPingTime(true);
                 if (responseTime > 0)
                 {
                     break;
@@ -66,33 +55,95 @@ public static class ConnectionHandler
         return responseTime;
     }
 
-    public static async Task<int> GetRealPingTime(string url, IWebProxy? webProxy, int downloadTimeout)
+    /// <summary>
+    /// Measures response time by sending HTTP requests through proxy.
+    /// </summary>
+    public static async Task<int> GetRealPingTime(bool useProxy, CancellationToken cancellationToken = default)
     {
         var responseTime = -1;
         try
         {
-            using var cts = new CancellationTokenSource();
-            cts.CancelAfter(TimeSpan.FromSeconds(downloadTimeout));
-            using var client = new HttpClient(new SocketsHttpHandler()
-            {
-                Proxy = webProxy,
-                UseProxy = webProxy != null
-            });
-
-            List<int> oneTime = new();
-            for (var i = 0; i < 2; i++)
-            {
-                var timer = Stopwatch.StartNew();
-                await client.GetAsync(url, cts.Token).ConfigureAwait(false);
-                timer.Stop();
-                oneTime.Add((int)timer.Elapsed.TotalMilliseconds);
-                await Task.Delay(100);
-            }
-            responseTime = oneTime.Where(x => x > 0).OrderBy(x => x).FirstOrDefault();
+            using var client = HttpClientHelper.Instance.GetHttpClient(useProxy);
+            responseTime = await GetRealPingTime(client, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
+            // Ignore
         }
         return responseTime;
+    }
+
+    public static async Task<int> GetRealPingTime(HttpClient client, CancellationToken cancellationToken = default)
+    {
+        var url = ConfigTextHandler.Config.SpeedTestItem.SpeedPingTestUrl;
+        var responseTime = -1;
+        try
+        {
+            using var timeoutCts = new CancellationTokenSource();
+            timeoutCts.CancelAfter(Global.LocalFetch);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+            var linkedToken = linkedCts.Token;
+
+            List<int> oneTime = [];
+            for (var i = 0; i < 2; i++)
+            {
+                var timer = Stopwatch.StartNew();
+                await client.GetAsync(url, linkedToken).ConfigureAwait(false);
+                timer.Stop();
+                oneTime.Add((int)timer.Elapsed.TotalMilliseconds);
+                await Task.Delay(100, linkedToken);
+            }
+            responseTime = oneTime.Where(x => x > 0).OrderBy(x => x).FirstOrDefault();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            // Ignore
+        }
+        return responseTime;
+    }
+
+    public static async Task<IpInfoResult?> GetIPInfo(DownloadService downloadHandle, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var url = ConfigTextHandler.Config.SpeedTestItem.IPAPIUrl;
+            if (url.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            var result = await downloadHandle.TryDownloadString(url, cancellationToken);
+            if (result == null)
+            {
+                return null;
+            }
+
+            var ipInfo = JsonUtils.Deserialize<IPAPIInfo>(result);
+            if (ipInfo == null)
+            {
+                return null;
+            }
+
+            var ip = ipInfo.ip ?? ipInfo.clientIp ?? ipInfo.ip_addr ?? ipInfo.query;
+            var country = ipInfo.country_code ?? ipInfo.country ?? ipInfo.countryCode ?? ipInfo.location?.country_code ?? ipInfo.location?.country ?? "unknown";
+
+            return new IpInfoResult(country, ip);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

@@ -54,7 +54,7 @@ public sealed class WindowsManager
     {
         try
         {
-            var item = await ConfigHandler.GetDefaultRouting(config);
+            var item = await ConfigDbHandler.GetDefaultRouting();
             if (item == null || item.CustomIcon.IsNullOrEmpty() || !File.Exists(item.CustomIcon))
             {
                 return null;

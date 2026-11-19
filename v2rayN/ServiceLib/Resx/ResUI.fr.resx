@@ -343,7 +343,7 @@
     <value>*clé de chiffrement QUIC</value>
   </data>
   <data name="TransportPathTip4" xml:space="preserve">
-    <value>*nom de service gRPC</value>
+    <value>nom de service gRPC</value>
   </data>
   <data name="TransportRequestHostTip1" xml:space="preserve">
     <value>*hôte http, séparés par des virgules (,)</value>
@@ -357,17 +357,17 @@
   <data name="TransportRequestHostTip4" xml:space="preserve">
     <value>*méthode de chiffrement QUIC</value>
   </data>
-  <data name="TransportHeaderTypeTip1" xml:space="preserve">
-    <value>*type de camouflage tcp</value>
+  <data name="TransportHeaderType1" xml:space="preserve">
+    <value>type de camouflage raw</value>
   </data>
-  <data name="TransportHeaderTypeTip2" xml:space="preserve">
-    <value>*type de camouflage kcp</value>
+  <data name="TransportHeaderType2" xml:space="preserve">
+    <value>type de camouflage kcp</value>
   </data>
-  <data name="TransportHeaderTypeTip3" xml:space="preserve">
-    <value>*type de camouflage QUIC</value>
+  <data name="TransportHeaderType3" xml:space="preserve">
+    <value>type de camouflage QUIC</value>
   </data>
-  <data name="TransportHeaderTypeTip4" xml:space="preserve">
-    <value>*mode gRPC</value>
+  <data name="TransportHeaderType4" xml:space="preserve">
+    <value>mode gRPC</value>
   </data>
   <data name="LvTLS" xml:space="preserve">
     <value>TLS</value>
@@ -606,9 +606,6 @@
   <data name="TbRemarks" xml:space="preserve">
     <value>Alias (remarks)</value>
   </data>
-  <data name="TbRequestHost" xml:space="preserve">
-    <value>Domaine de camouflage (host)</value>
-  </data>
   <data name="TbSecurity" xml:space="preserve">
     <value>Méthode de chiffrement (security)</value>
   </data>
@@ -619,7 +616,7 @@
     <value>Sécurité couche transport (TLS)</value>
   </data>
   <data name="TipNetwork" xml:space="preserve">
-    <value>*tcp par défaut ; un mauvais choix bloque la connexion</value>
+    <value>*raw par défaut ; un mauvais choix bloque la connexion</value>
   </data>
   <data name="TbCoreType" xml:space="preserve">
     <value>Type de Core</value>
@@ -723,9 +720,6 @@
   <data name="TbSettingsPass" xml:space="preserve">
     <value>Mot de passe d’authentification</value>
   </data>
-  <data name="TbSettingsRemoteDNS" xml:space="preserve">
-    <value>DNS perso (plusieurs configurables, séparés par virgules)</value>
-  </data>
   <data name="TbSettingsSetUWP" xml:space="preserve">
     <value>Lever la restriction de proxy en boucle locale pour les applications Win10 UWP</value>
   </data>
@@ -746,9 +740,6 @@
   </data>
   <data name="TbSettingsSystemproxy" xml:space="preserve">
     <value>Paramètres du proxy système</value>
-  </data>
-  <data name="TbSettingsTrayMenuServersLimit" xml:space="preserve">
-    <value>Limite du nombre de configurations affichées dans le menu du plateau</value>
   </data>
   <data name="TbSettingsUdpEnabled" xml:space="preserve">
     <value>Activer l’UDP</value>
@@ -937,7 +928,7 @@
     <value>Agent utilisateur (User-Agent)</value>
   </data>
   <data name="TbSettingsDefUserAgentTips" xml:space="preserve">
-    <value>Valable uniquement pour les protocoles tcp/http et ws</value>
+    <value>This parameter is valid only for raw/http, ws, gRPC and xhttp</value>
   </data>
   <data name="TbSettingsCurrentFontFamily" xml:space="preserve">
     <value>Police actuelle (redémarrage requis)</value>
@@ -1065,7 +1056,10 @@
   <data name="TbSettingsTunStack" xml:space="preserve">
     <value>Pile de protocoles</value>
   </data>
-  <data name="TbSettingsTunMtu" xml:space="preserve">
+  <data name="TbSettingsTunDnsMode" xml:space="preserve">
+    <value>Mode DNS</value>
+  </data>
+  <data name="TbMtu" xml:space="preserve">
     <value>MTU</value>
   </data>
   <data name="TbSettingsEnableIPv6Address" xml:space="preserve">
@@ -1078,7 +1072,7 @@
     <value>PrivateKey</value>
   </data>
   <data name="TbReserved" xml:space="preserve">
-    <value>Reserved (2,3,4)</value>
+    <value>Reserved</value>
   </data>
   <data name="TbLocalAddress" xml:space="preserve">
     <value>Address (IPv4,IPv6)</value>
@@ -1099,13 +1093,46 @@
     <value>Arrêt du test en cours...</value>
   </data>
   <data name="TransportRequestHostTip5" xml:space="preserve">
-    <value>*Autorité gRPC</value>
+    <value>Autorité gRPC</value>
   </data>
   <data name="menuAddHttpServer" xml:space="preserve">
     <value>Ajouter [HTTP]</value>
   </data>
   <data name="TbSettingsEnableFragment" xml:space="preserve">
     <value>Activer le fragmentation (Fragment)</value>
+  </data>
+  <data name="TbSettingsFragmentPackets" xml:space="preserve">
+    <value>Paquets fragmentés</value>
+  </data>
+  <data name="TbSettingsFragmentPacketsTip" xml:space="preserve">
+    <value>Paquets à fragmenter : tlshello (TLS ClientHello) ou 1-1 à 1-5 (premiers N paquets TCP)</value>
+  </data>
+  <data name="TbSettingsFragmentLength" xml:space="preserve">
+    <value>Longueur fragment</value>
+  </data>
+  <data name="TbSettingsFragmentLengthTip" xml:space="preserve">
+    <value>Plage de taille fragment (ex: 50-100). Première valeur ≤ seconde. Vide = défaut.</value>
+  </data>
+  <data name="TbSettingsFragmentInterval" xml:space="preserve">
+    <value>Intervalle fragment</value>
+  </data>
+  <data name="TbSettingsFragmentIntervalTip" xml:space="preserve">
+    <value>Délai entre fragments en ms (ex: 10-20). Plage 1-100. Première valeur ≤ seconde. Vide = défaut.</value>
+  </data>
+  <data name="TbSettingsFragmentMaxSplit" xml:space="preserve">
+    <value>Max Split</value>
+  </data>
+  <data name="TbSettingsFragmentMaxSplitTip" xml:space="preserve">
+    <value>Nb max de splits (0 = illimité, 0-10000). Xray-core seulement. Vide = défaut.</value>
+  </data>
+  <data name="TbSettingsFragmentFallbackDelay" xml:space="preserve">
+    <value>Délai fallback</value>
+  </data>
+  <data name="TbSettingsFragmentFallbackDelayTip" xml:space="preserve">
+    <value>Délai fallback pour fragment TLS. sing-box seulement. Vide = défaut.</value>
+  </data>
+  <data name="FillFragmentParameterError" xml:space="preserve">
+    <value>Format de plage invalide. Utilisez 'from-to' (ex: 50-100).</value>
   </data>
   <data name="TbSettingsEnableCacheFile4Sbox" xml:space="preserve">
     <value>Activer le fichier de cache de sing-box (fichiers règles)</value>
@@ -1185,7 +1212,7 @@
   <data name="menuModeRule" xml:space="preserve">
     <value>Règle</value>
   </data>
-  <data name="menuProxiesDelaytest" xml:space="preserve">
+  <data name="menuDelaytest" xml:space="preserve">
     <value>Test de latence</value>
   </data>
   <data name="menuProxiesDelaytestPart" xml:space="preserve">
@@ -1316,12 +1343,12 @@
   </data>
   <data name="TbSettingsLinuxSudoPasswordTip" xml:space="preserve">
     <value>Le mot de passe sera vérifié en ligne de commande. En cas d’échec ou de dysfonctionnement, redémarrez l’application. Il n’est pas stocké et doit être saisi à chaque redémarrage.</value>
-  </data>
-  <data name="TransportHeaderTypeTip5" xml:space="preserve">
-    <value>*Mode XHTTP</value>
+    </data>
+  <data name="TransportHeaderType5" xml:space="preserve">
+    <value>Mode XHTTP</value>
   </data>
   <data name="TransportExtraTip" xml:space="preserve">
-    <value>JSON brut XHTTP Extra, format : { XHTTPObject }</value>
+    <value>Raw JSON, format: { XHTTP Object }</value>
   </data>
   <data name="TbSettingsHide2TrayWhenClose" xml:space="preserve">
     <value>Masquer dans la barre d’état à la fermeture de la fenêtre</value>
@@ -1426,7 +1453,7 @@
     <value>DNS personnalisé activé ; la configuration de cette page sera ignorée</value>
   </data>
   <data name="TbBlockSVCBHTTPSQueriesTips" xml:space="preserve">
-    <value>Une fois activé, bloque les requêtes ECH et de disponibilité HTTP/3</value>
+    <value>Block ECH and HTTP/3 availability checks when enabled. Always enabled in Xray</value>
   </data>
   <data name="FillCorrectConfigTemplateText" xml:space="preserve">
     <value>Veuillez saisir un modèle de configuration valide</value>
@@ -1465,7 +1492,7 @@
     <value>Choisir une config.</value>
   </data>
   <data name="TbFakeIPTips" xml:space="preserve">
-    <value>Actif globalement par défaut, avec filtre FakeIP intégré ; ne fonctionne que dans sing-box</value>
+    <value>Applies globally by default, and built-in FakeIP filtering is only built into sing-box.</value>
   </data>
   <data name="PleaseAddAtLeastOneServer" xml:space="preserve">
     <value>Veuillez ajouter au moins une configuration</value>
@@ -1584,9 +1611,6 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
   <data name="TbEchConfigList" xml:space="preserve">
     <value>EchConfigList</value>
   </data>
-  <data name="TbEchForceQuery" xml:space="preserve">
-    <value>EchForceQuery</value>
-  </data>
   <data name="TbFullCertTips" xml:space="preserve">
     <value>Certificat complet (chaîne), format PEM</value>
   </data>
@@ -1621,49 +1645,49 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>Finalmask</value>
   </data>
   <data name="MsgRoutingRuleOutboundNodeWarning" xml:space="preserve">
-    <value>Routing rule {0} outbound node {1} warning: {2}</value>
+    <value>Règle de routage {0} nœud sortant {1} avertissement: {2}</value>
   </data>
   <data name="MsgRoutingRuleOutboundNodeError" xml:space="preserve">
-    <value>Routing rule {0} outbound node {1} error: {2}. Fallback to proxy node only.</value>
+    <value>Règle {0} nœud VPN sortant {1} erreur : {2}. Repli nœud proxy uniquement.</value>
   </data>
   <data name="MsgGroupCycleDependency" xml:space="preserve">
-    <value>Group {0} has a cycle dependency on child node {1}. Skipping this node.</value>
+    <value>Le groupe {0} a une dépendance cyclique avec le nœud enfant {1}. Nœud ignoré.</value>
   </data>
   <data name="MsgGroupChildNodeWarning" xml:space="preserve">
-    <value>Group {0} child node {1} warning: {2}</value>
+    <value>Groupe {0} nœud enfant {1} avertissement : {2}</value>
   </data>
   <data name="MsgGroupChildNodeError" xml:space="preserve">
-    <value>Group {0} child node {1} error: {2}. Skipping this node.</value>
+    <value>Groupe {0} nœud enfant {1} erreur : {2}. Nœud ignoré.</value>
   </data>
   <data name="MsgGroupChildGroupNodeWarning" xml:space="preserve">
-    <value>Group {0} child group node {1} warning: {2}</value>
+    <value>Groupe {0} nœud enfant groupe {1} avertissement: {2}</value>
   </data>
   <data name="MsgGroupChildGroupNodeError" xml:space="preserve">
-    <value>Group {0} child group node {1} error: {2}. Skipping this node.</value>
+    <value>Groupe {0} nœud groupe enfant {1} erreur: {2}. Nœud ignoré.</value>
   </data>
   <data name="MsgGroupNoValidChildNode" xml:space="preserve">
-    <value>Group {0} has no valid child node.</value>
+    <value>Groupe {0} n’a aucun nœud enfant valide.</value>
   </data>
   <data name="MsgRoutingRuleEmptyOutboundTag" xml:space="preserve">
-    <value>Routing rule {0} has an empty outbound tag. Fallback to proxy node only.</value>
+    <value>Règle de routage {0} tag sortant vide. Replié sur le nœud proxy uniquement.</value>
   </data>
   <data name="MsgRoutingRuleOutboundNodeNotFound" xml:space="preserve">
-    <value>Routing rule {0} outbound node {1} not found. Fallback to proxy node only.</value>
+    <value>Règle de routage {0} nœud sortant {1} introuvable. Repli sur le seul nœud proxy.</value>
   </data>
   <data name="MsgSubscriptionPrevProfileNotFound" xml:space="preserve">
-    <value>Subscription previous proxy {0} not found. Skipping.</value>
+    <value>Nœud proxy précédent de l’abonnement {0} introuvable. Ignoré.</value>
   </data>
   <data name="MsgSubscriptionNextProfileNotFound" xml:space="preserve">
-    <value>Subscription next proxy {0} not found. Skipping.</value>
+    <value>Nœud proxy suivant de l’abonnement {0} introuvable. Ignoré.</value>
   </data>
   <data name="menuGenGroupServer" xml:space="preserve">
-    <value>Generate Policy Group</value>
+    <value>Générer groupe de stratégie</value>
   </data>
   <data name="menuAllServers" xml:space="preserve">
-    <value>All configurations</value>
+    <value>Toutes configurations</value>
   </data>
   <data name="menuGenRegionGroup" xml:space="preserve">
-    <value>Group by Region</value>
+    <value>Grouper par région</value>
   </data>
   <data name="menuEditCopy" xml:space="preserve">
     <value>Copier</value>
@@ -1672,7 +1696,7 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>Tout sélect</value>
   </data>
   <data name="menuEditPaste" xml:space="preserve">
-    <value>Paste</value>
+    <value>Coller</value>
   </data>
   <data name="menuEditFormat" xml:space="preserve">
     <value>Format</value>
@@ -1684,12 +1708,99 @@ The "Get Certificate" action may fail if a self-signed certificate is used or if
     <value>Ajouter [NaïveProxy]</value>
   </data>
   <data name="TbInsecureConcurrency" xml:space="preserve">
-    <value>Insecure Concurrency</value>
+    <value>Concurrence non sûre</value>
   </data>
   <data name="TbUsername" xml:space="preserve">
-    <value>Username</value>
+    <value>Nom d’utilisateur</value>
   </data>
   <data name="TbIcmpRoutingPolicy" xml:space="preserve">
-    <value>ICMP routing policy</value>
+    <value>Politique de routage ICMP</value>
+  </data>
+  <data name="TbLegacyProtect" xml:space="preserve">
+    <value>Protection TUN héritée</value>
+  </data>
+  <data name="TbCamouflageDomain" xml:space="preserve">
+    <value>Domaine de camouflage</value>
+  </data>
+  <data name="TbHost" xml:space="preserve">
+    <value>Host</value>
+  </data>
+  <data name="TransportExtra" xml:space="preserve">
+    <value>XHTTP Extra</value>
+  </data>
+  <data name="TbSettingsSendThrough" xml:space="preserve">
+    <value>Adresse de sortie locale (SendThrough)</value>
+  </data>
+  <data name="TbSettingsSendThroughTip" xml:space="preserve">
+    <value>Pour environnements multi-interfaces, entrez l'adresse IPv4 de la machine locale</value>
+  </data>
+  <data name="TbSettingsBindInterface" xml:space="preserve">
+    <value>Lier l'interface</value>
+  </data>
+  <data name="TbSettingsBindInterfaceTip" xml:space="preserve">
+    <value>Pour les environnements multi-interfaces, entrez le nom de l'interface à lier. Ne fonctionne que sur les systèmes Windows et en mode TUN</value>
+  </data>
+  <data name="menuUdpTestServer" xml:space="preserve">
+    <value>Tester la latence UDP des profils</value>
+  </data>
+  <data name="TbSettingsUdpTestUrl" xml:space="preserve">
+    <value>URL de test UDP</value>
+  </data>
+  <data name="TbPreSharedKey" xml:space="preserve">
+    <value>PreSharedKey</value>
+  </data>
+  <data name="menuExport2InnerUri" xml:space="preserve">
+    <value>Exporter le lien interne v2rayN vers le presse-papiers</value>
+  </data>
+  <data name="MsgCheckUpdateHasNewVersion" xml:space="preserve">
+    <value>{0} a une nouvelle version disponible: {1}</value>
+  </data>
+  <data name="menuCheckOnly" xml:space="preserve">
+    <value>Uniquement vérifier</value>
+  </data>
+  <data name="MsgNotSupport" xml:space="preserve">
+    <value>Non supporté</value>
+  </data>
+  <data name="LvTestIpInfo" xml:space="preserve">
+    <value>Détails IP</value>
+  </data>
+  <data name="menuNewUpdate" xml:space="preserve">
+    <value>Nouvelle MAJ</value>
+  </data>
+  <data name="XdriveProvider" xml:space="preserve">
+    <value>Fournisseur prédéfini</value>
+  </data>
+  <data name="XdriveService" xml:space="preserve">
+    <value>Service de stockage (service)</value>
+  </data>
+  <data name="XdriveRemoteFolder" xml:space="preserve">
+    <value>Dossier distant (remoteFolder)</value>
+  </data>
+  <data name="XdriveSecrets" xml:space="preserve">
+    <value>Clés d'accès (AK,SK / OAuth)</value>
+  </data>
+  <data name="XdriveS3Endpoint" xml:space="preserve">
+    <value>Point de terminaison S3 (Endpoint)</value>
+  </data>
+  <data name="XdriveS3Region" xml:space="preserve">
+    <value>Région S3 (Region)</value>
+  </data>
+  <data name="XdriveS3Bucket" xml:space="preserve">
+    <value>Bucket S3</value>
+  </data>
+  <data name="XdriveS3PathStyle" xml:space="preserve">
+    <value>Mode d'adressage S3 (PathStyle)</value>
+  </data>
+  <data name="XdriveExtra" xml:space="preserve">
+    <value>XDRIVE Extra</value>
+  </data>
+  <data name="XdriveExtraTip" xml:space="preserve">
+    <value>JSON brut, format : { XdriveObject }</value>
+  </data>
+  <data name="TransportHeaderType6" xml:space="preserve">
+    <value>Service XDRIVE</value>
+  </data>
+  <data name="TransportPathTip6" xml:space="preserve">
+    <value>Dossier distant XDRIVE</value>
   </data>
 </root>

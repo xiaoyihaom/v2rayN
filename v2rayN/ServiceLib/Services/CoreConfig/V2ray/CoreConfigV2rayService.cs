@@ -15,10 +15,6 @@ public partial class CoreConfigV2rayService(CoreConfigContext context)
         var ret = new RetResult();
         try
         {
-            if (context.IsTunEnabled && context.TunProtectSsPort > 0 && context.ProxyRelaySsPort > 0)
-            {
-                return GenerateClientProxyRelayConfig();
-            }
             if (_node == null
                 || !_node.IsValid())
             {
@@ -60,6 +56,15 @@ public partial class CoreConfigV2rayService(CoreConfigContext context)
 
             GenStatistic();
 
+            if (_config.CoreBasicItem.EnableFragment)
+            {
+                ApplyOutboundFragment();
+            }
+            if (_config.CoreBasicItem.EnableFinalFragment)
+            {
+                ApplyFinalFragment();
+            }
+
             var finalRule = BuildFinalRule();
             if (!string.IsNullOrEmpty(finalRule?.balancerTag))
             {
@@ -68,7 +73,7 @@ public partial class CoreConfigV2rayService(CoreConfigContext context)
 
             ret.Msg = string.Format(ResUI.SuccessfulConfiguration, "");
             ret.Success = true;
-            ret.Data = ApplyFullConfigTemplate();
+            ret.Data = ApplyFinalConfigModifiers();
             return ret;
         }
         catch (Exception ex)
@@ -112,7 +117,7 @@ public partial class CoreConfigV2rayService(CoreConfigContext context)
 
             foreach (var it in selecteds)
             {
-                if (!(Global.XraySupportConfigType.Contains(it.ConfigType) || it.ConfigType.IsGroupType()))
+                if (!(Global.XraySupportConfigType.Contains(it.ConfigType) || it.ConfigType.IsGroupType() || it.ConfigType is EConfigType.Outbound))
                 {
                     continue;
                 }
@@ -158,7 +163,12 @@ public partial class CoreConfigV2rayService(CoreConfigContext context)
                 {
                     listen = Global.Loopback,
                     port = port,
-                    protocol = EInboundProtocol.mixed.ToString(),
+                    protocol = nameof(EInboundProtocol.mixed),
+                    settings = new Inboundsettings4Ray()
+                    {
+                        udp = true,
+                        auth = "noauth"
+                    },
                 };
                 inbound.tag = inbound.protocol + inbound.port.ToString();
                 _coreConfig.inbounds.Add(inbound);
@@ -166,13 +176,13 @@ public partial class CoreConfigV2rayService(CoreConfigContext context)
                 var tag = Global.ProxyTag + inbound.port.ToString();
                 var isBalancer = false;
                 //outbound
-                var proxyOutbounds =
-                    new CoreConfigV2rayService(context with { Node = item }).BuildAllProxyOutbounds(tag);
+                var service = new CoreConfigV2rayService(context with { Node = item });
+                var proxyOutbounds = service.BuildAllProxyOutbounds(tag);
                 _coreConfig.outbounds.AddRange(proxyOutbounds);
                 if (proxyOutbounds.Count(n => n.tag.StartsWith(tag)) > 1)
                 {
                     isBalancer = true;
-                    var multipleLoad = _node.GetProtocolExtra().MultipleLoad ?? EMultipleLoad.LeastPing;
+                    var multipleLoad = service.FindFirstPolicyGroupMultipleLoad() ?? EMultipleLoad.LeastPing;
                     GenObservatory(multipleLoad, tag);
                     GenBalancer(multipleLoad, tag);
                 }
@@ -192,9 +202,19 @@ public partial class CoreConfigV2rayService(CoreConfigContext context)
                 _coreConfig.routing.rules.Add(rule);
             }
 
+            if (_config.CoreBasicItem.EnableFragment)
+            {
+                ApplyOutboundFragment();
+            }
+            if (_config.CoreBasicItem.EnableFinalFragment)
+            {
+                ApplyFinalFragment();
+            }
+            ApplyOutboundBindInterface();
+            ApplyOutboundSendThrough();
             //ret.Msg =string.Format(ResUI.SuccessfulConfiguration"), node.getSummary());
             ret.Success = true;
-            ret.Data = JsonUtils.Serialize(_coreConfig);
+            ret.Data = ApplyCustomOutboundReplace();
             return ret;
         }
         catch (Exception ex)
@@ -248,149 +268,30 @@ public partial class CoreConfigV2rayService(CoreConfigContext context)
                 tag = $"{EInboundProtocol.socks}{port}",
                 listen = Global.Loopback,
                 port = port,
-                protocol = EInboundProtocol.mixed.ToString(),
+                protocol = nameof(EInboundProtocol.mixed),
+                settings = new Inboundsettings4Ray()
+                {
+                    udp = true,
+                    auth = "noauth"
+                },
             });
 
             _coreConfig.routing.rules.Add(BuildFinalRule());
 
-            ret.Msg = string.Format(ResUI.SuccessfulConfiguration, "");
-            ret.Success = true;
-            ret.Data = JsonUtils.Serialize(_coreConfig);
-            return ret;
-        }
-        catch (Exception ex)
-        {
-            Logging.SaveLog(_tag, ex);
-            ret.Msg = ResUI.FailedGenDefaultConfiguration;
-            return ret;
-        }
-    }
-
-    public RetResult GenerateClientProxyRelayConfig()
-    {
-        var ret = new RetResult();
-        try
-        {
-            if (_node == null
-                || !_node.IsValid())
+            if (_config.CoreBasicItem.EnableFragment)
             {
-                ret.Msg = ResUI.CheckServerSettings;
-                return ret;
+                ApplyOutboundFragment();
             }
-
-            if (_node.GetNetwork() is nameof(ETransport.quic))
+            if (_config.CoreBasicItem.EnableFinalFragment)
             {
-                ret.Msg = ResUI.Incorrectconfiguration + $" - {_node.GetNetwork()}";
-                return ret;
+                ApplyFinalFragment();
             }
-
-            var result = EmbedUtils.GetEmbedText(Global.V2raySampleClient);
-            if (result.IsNullOrEmpty())
-            {
-                ret.Msg = ResUI.FailedGetDefaultConfiguration;
-                return ret;
-            }
-
-            _coreConfig = JsonUtils.Deserialize<V2rayConfig>(result);
-            if (_coreConfig == null)
-            {
-                ret.Msg = ResUI.FailedGenDefaultConfiguration;
-                return ret;
-            }
-
-            GenLog();
-            _coreConfig.outbounds.Clear();
-            GenOutbounds();
-            GenStatistic();
-
-            var protectNode = new ProfileItem()
-            {
-                CoreType = ECoreType.Xray,
-                ConfigType = EConfigType.Shadowsocks,
-                Address = Global.Loopback,
-                Port = context.TunProtectSsPort,
-                Password = Global.None,
-            };
-            protectNode.SetProtocolExtra(protectNode.GetProtocolExtra() with
-            {
-                SsMethod = Global.None,
-            });
-
-            const string protectTag = "tun-protect-ss";
-            foreach (var outbound in _coreConfig.outbounds
-                .Where(o => o.streamSettings?.sockopt?.dialerProxy?.IsNullOrEmpty() ?? true))
-            {
-                outbound.streamSettings ??= new();
-                outbound.streamSettings.sockopt ??= new();
-                outbound.streamSettings.sockopt.dialerProxy = protectTag;
-            }
-            // ech protected
-            foreach (var outbound in _coreConfig.outbounds
-                .Where(outbound => outbound.streamSettings?.tlsSettings?.echConfigList?.IsNullOrEmpty() == false))
-            {
-                outbound.streamSettings!.tlsSettings!.echSockopt ??= new();
-                outbound.streamSettings.tlsSettings.echSockopt.dialerProxy = protectTag;
-            }
-            // xhttp download protected
-            foreach (var outbound in _coreConfig.outbounds
-                .Where(o => o.streamSettings?.xhttpSettings?.extra is not null))
-            {
-                var xhttpExtra = JsonUtils.ParseJson(JsonUtils.Serialize(outbound.streamSettings.xhttpSettings!.extra));
-                if (xhttpExtra is not JsonObject xhttpExtraObject
-                    || xhttpExtraObject["downloadSettings"] is not JsonObject downloadSettings)
-                {
-                    continue;
-                }
-                // dialerProxy
-                var sockopt = downloadSettings["sockopt"] as JsonObject ?? new JsonObject();
-                sockopt["dialerProxy"] = protectTag;
-                downloadSettings["sockopt"] = sockopt;
-                // ech protected
-                if (downloadSettings["tlsSettings"] is JsonObject tlsSettings
-                    && tlsSettings["echConfigList"] is not null)
-                {
-                    tlsSettings["echSockopt"] = new JsonObject
-                    {
-                        ["dialerProxy"] = protectTag
-                    };
-                }
-                outbound.streamSettings.xhttpSettings.extra = xhttpExtraObject;
-            }
-            _coreConfig.outbounds.Add(new CoreConfigV2rayService(context with
-            {
-                Node = protectNode,
-            }).BuildProxyOutbound(protectTag));
-
-            _coreConfig.routing.rules ??= [];
-            var hasBalancer = _coreConfig.routing.balancers is { Count: > 0 };
-            _coreConfig.routing.rules.Add(new()
-            {
-                inboundTag = ["proxy-relay-ss"],
-                outboundTag = hasBalancer ? null : Global.ProxyTag,
-                balancerTag = hasBalancer ? Global.ProxyTag + Global.BalancerTagSuffix : null,
-                type = "field"
-            });
-
-            //_coreConfig.inbounds.Clear();
-
-            var configNode = JsonUtils.ParseJson(JsonUtils.Serialize(_coreConfig))!;
-            configNode["inbounds"]!.AsArray().Add(new
-            {
-                listen = Global.Loopback,
-                port = context.ProxyRelaySsPort,
-                protocol = "shadowsocks",
-                settings = new
-                {
-                    network = "tcp,udp",
-                    method = Global.None,
-                    password = Global.None,
-                },
-                tag = "proxy-relay-ss",
-            });
+            ApplyOutboundBindInterface();
+            ApplyOutboundSendThrough();
 
             ret.Msg = string.Format(ResUI.SuccessfulConfiguration, "");
             ret.Success = true;
-            ret.Data = JsonUtils.Serialize(configNode);
+            ret.Data = ApplyCustomOutboundReplace();
             return ret;
         }
         catch (Exception ex)

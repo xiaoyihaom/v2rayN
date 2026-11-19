@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Xml;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
@@ -7,8 +6,6 @@ namespace v2rayN.Desktop.Views;
 
 public partial class JsonEditor : UserControl
 {
-    private static readonly JsonSerializerOptions SIndentedOptions = new() { WriteIndented = true };
-
     private static readonly Lazy<IHighlightingDefinition> SHighlightingDark =
         new(() => BuildHighlighting(dark: true), isThreadSafe: true);
 
@@ -27,6 +24,7 @@ public partial class JsonEditor : UserControl
     public JsonEditor()
     {
         InitializeComponent();
+
         var isDark = Application.Current?.ActualThemeVariant != ThemeVariant.Light;
         Editor.SyntaxHighlighting = isDark ? SHighlightingDark.Value : SHighlightingLight.Value;
         Editor.TextArea.TextView.Options.EnableHyperlinks = false;
@@ -46,6 +44,11 @@ public partial class JsonEditor : UserControl
                 Editor.Text = text ?? string.Empty;
             }
         });
+
+        if (Design.IsDesignMode)
+        {
+            Text = "{\n  \"key\": \"value\",\n  \"number\": 123,\n  \"boolean\": true,\n  \"nullValue\": null\n}";
+        }
     }
 
     private static IHighlightingDefinition BuildHighlighting(bool dark)
@@ -53,7 +56,7 @@ public partial class JsonEditor : UserControl
         var keyColor = dark ? "#9CDCFE" : "#0451A5";
         var strColor = dark ? "#CE9178" : "#A31515";
         var numColor = dark ? "#B5CEA8" : "#098658";
-        var kwColor  = dark ? "#569CD6" : "#0000FF";
+        var kwColor = dark ? "#569CD6" : "#0000FF";
         var xshd = $"""
             <?xml version="1.0"?>
             <SyntaxDefinition name="JSON" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
@@ -82,7 +85,7 @@ public partial class JsonEditor : UserControl
         try
         {
             var obj = JsonUtils.ParseJson(Editor.Text);
-            Editor.Text = JsonUtils.Serialize(obj, SIndentedOptions);
+            Editor.Text = JsonUtils.Serialize(obj, indented: true, nullValue: true);
         }
         catch
         {
@@ -91,6 +94,8 @@ public partial class JsonEditor : UserControl
     }
 
     private void Copy_Click(object? sender, RoutedEventArgs e) => Editor.Copy();
+
     private void Paste_Click(object? sender, RoutedEventArgs e) => Editor.Paste();
+
     private void SelectAll_Click(object? sender, RoutedEventArgs e) => Editor.SelectAll();
 }

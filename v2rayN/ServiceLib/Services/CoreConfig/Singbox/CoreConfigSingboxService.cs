@@ -60,52 +60,7 @@ public partial class CoreConfigSingboxService(CoreConfigContext context)
             ret.Msg = string.Format(ResUI.SuccessfulConfiguration, "");
             ret.Success = true;
 
-            ret.Data = ApplyFullConfigTemplate();
-            if (context.TunProtectSsPort is > 0 and <= 65535)
-            {
-                var ssInbound = new
-                {
-                    type = "shadowsocks",
-                    tag = "tun-protect-ss",
-                    listen = Global.Loopback,
-                    listen_port = context.TunProtectSsPort,
-                    method = "none",
-                    password = "none",
-                };
-                var directRule = new Rule4Sbox()
-                {
-                    inbound = new List<string> { ssInbound.tag },
-                    outbound = Global.DirectTag,
-                };
-                var singboxConfigNode = JsonUtils.ParseJson(ret.Data.ToString())!.AsObject();
-                var inboundsNode = singboxConfigNode["inbounds"]!.AsArray();
-                inboundsNode.Add(JsonUtils.SerializeToNode(ssInbound, new JsonSerializerOptions
-                {
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                }));
-                var routeNode = singboxConfigNode["route"]?.AsObject();
-                var rulesNode = routeNode?["rules"]?.AsArray();
-                var protectRuleNode = JsonUtils.SerializeToNode(directRule,
-                    new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-                if (rulesNode != null)
-                {
-                    rulesNode.Insert(0, protectRuleNode);
-                }
-                else
-                {
-                    var newRulesNode = new JsonArray() { protectRuleNode };
-                    if (routeNode is null)
-                    {
-                        var newRouteNode = new JsonObject() { ["rules"] = newRulesNode };
-                        singboxConfigNode["route"] = newRouteNode;
-                    }
-                    else
-                    {
-                        routeNode["rules"] = newRulesNode;
-                    }
-                }
-                ret.Data = JsonUtils.Serialize(singboxConfigNode);
-            }
+            ret.Data = ApplyFinalConfigModifiers();
             return ret;
         }
         catch (Exception ex)
@@ -149,7 +104,7 @@ public partial class CoreConfigSingboxService(CoreConfigContext context)
 
             foreach (var it in selecteds)
             {
-                if (!(Global.SingboxSupportConfigType.Contains(it.ConfigType) || it.ConfigType.IsGroupType()))
+                if (!(Global.SingboxSupportConfigType.Contains(it.ConfigType) || it.ConfigType.IsGroupType() || it.ConfigType is EConfigType.Outbound))
                 {
                     continue;
                 }
@@ -195,7 +150,7 @@ public partial class CoreConfigSingboxService(CoreConfigContext context)
                 {
                     listen = Global.Loopback,
                     listen_port = port,
-                    type = EInboundProtocol.mixed.ToString(),
+                    type = nameof(EInboundProtocol.mixed),
                 };
                 inbound.tag = inbound.type + inbound.listen_port.ToString();
                 _coreConfig.inbounds.Add(inbound);
@@ -213,8 +168,10 @@ public partial class CoreConfigSingboxService(CoreConfigContext context)
                 _coreConfig.route.rules.Add(rule);
             }
 
+            ApplyOutboundBindInterface();
+            ApplyOutboundSendThrough();
             ret.Success = true;
-            ret.Data = JsonUtils.Serialize(_coreConfig);
+            ret.Data = ApplyCustomOutboundReplace();
             return ret;
         }
         catch (Exception ex)
@@ -269,12 +226,14 @@ public partial class CoreConfigSingboxService(CoreConfigContext context)
                 tag = $"{EInboundProtocol.mixed}{port}",
                 listen = Global.Loopback,
                 listen_port = port,
-                type = EInboundProtocol.mixed.ToString(),
+                type = nameof(EInboundProtocol.mixed),
             });
+            ApplyOutboundBindInterface();
+            ApplyOutboundSendThrough();
 
             ret.Msg = string.Format(ResUI.SuccessfulConfiguration, "");
             ret.Success = true;
-            ret.Data = JsonUtils.Serialize(_coreConfig);
+            ret.Data = ApplyCustomOutboundReplace();
             return ret;
         }
         catch (Exception ex)

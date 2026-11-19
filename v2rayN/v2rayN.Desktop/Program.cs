@@ -1,10 +1,12 @@
 using v2rayN.Desktop.Common;
+using v2rayN.Desktop.Manager;
 
 namespace v2rayN.Desktop;
 
 internal class Program
 {
     public static EventWaitHandle ProgramStarted;
+    private static Mutex? _instanceMutex;
 
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
@@ -37,7 +39,9 @@ internal class Program
         }
         else
         {
-            _ = new Mutex(true, "v2rayN", out var bOnlyOneInstance);
+            // Keep the named mutex alive for the process lifetime. Discarding the handle lets
+            // the runtime finalize it, so the next launch sees no running instance.
+            _instanceMutex = new Mutex(true, "v2rayN", out var bOnlyOneInstance);
             if (!bOnlyOneInstance)
             {
                 return false;
@@ -48,6 +52,8 @@ internal class Program
         {
             return false;
         }
+
+        AppManager.Instance.WindowDialog = new WindowDialog();
         return true;
     }
 
@@ -58,12 +64,15 @@ internal class Program
            .UsePlatformDetect()
            //.WithInterFont()
            .WithFontByDefault()
+#if DEBUG
+           .WithDeveloperTools()
+#endif
            .LogToTrace()
            .UseReactiveUI(_ => { });
 
         if (OperatingSystem.IsMacOS())
         {
-            var showInDock = Design.IsDesignMode || AppManager.Instance.Config.UiItem.MacOSShowInDock;
+            var showInDock = Design.IsDesignMode || ConfigTextHandler.Config.UiItem.MacOSShowInDock;
             builder = builder.With(new MacOSPlatformOptions { ShowInDock = showInDock });
         }
 

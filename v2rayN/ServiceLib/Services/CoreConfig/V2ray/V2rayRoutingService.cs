@@ -6,6 +6,35 @@ public partial class CoreConfigV2rayService
     {
         try
         {
+            if (context.IsTunEnabled)
+            {
+                var tunRules = JsonUtils.Deserialize<List<RulesItem4Ray>>(EmbedUtils.GetEmbedText(Global.V2raySampleTunRules));
+                if (tunRules != null)
+                {
+                    _coreConfig.routing.rules.AddRange(tunRules);
+                }
+                var lstDirectExe = BuildRoutingDirectExe();
+                if (lstDirectExe.Count > 0)
+                {
+                    _coreConfig.routing.rules.Add(new()
+                    {
+                        port = "53",
+                        process = lstDirectExe,
+                        outboundTag = Global.DnsOutboundTag,
+                    });
+                    _coreConfig.routing.rules.Add(new()
+                    {
+                        process = lstDirectExe,
+                        outboundTag = Global.DirectTag,
+                    });
+                }
+                _coreConfig.routing.rules.Add(new()
+                {
+                    inboundTag = ["tun"],
+                    port = "53",
+                    outboundTag = Global.DnsOutboundTag,
+                });
+            }
             if (_coreConfig.routing?.rules != null)
             {
                 _coreConfig.routing.domainStrategy = _config.RoutingBasicItem.DomainStrategy;
@@ -159,7 +188,8 @@ public partial class CoreConfigV2rayService
 
         if (node == null
             || (!Global.XraySupportConfigType.Contains(node.ConfigType)
-            && !node.ConfigType.IsGroupType()))
+            && !node.ConfigType.IsGroupType()
+            && node.ConfigType is not EConfigType.Outbound))
         {
             return Global.ProxyTag;
         }
@@ -170,11 +200,12 @@ public partial class CoreConfigV2rayService
             return tag;
         }
 
-        var proxyOutbounds = new CoreConfigV2rayService(context with { Node = node, }).BuildAllProxyOutbounds(tag);
+        var service = new CoreConfigV2rayService(context with { Node = node, });
+        var proxyOutbounds = service.BuildAllProxyOutbounds(tag);
         _coreConfig.outbounds.AddRange(proxyOutbounds);
         if (proxyOutbounds.Count(n => n.tag.StartsWith(tag)) > 1)
         {
-            var multipleLoad = node.GetProtocolExtra().MultipleLoad ?? EMultipleLoad.LeastPing;
+            var multipleLoad = service.FindFirstPolicyGroupMultipleLoad() ?? EMultipleLoad.LeastPing;
             GenObservatory(multipleLoad, tag);
             GenBalancer(multipleLoad, tag);
         }
@@ -204,5 +235,46 @@ public partial class CoreConfigV2rayService
             finalRule.ip = ["0.0.0.0/0", "::/0"];
         }
         return finalRule;
+    }
+
+    private List<string> BuildRoutingDirectExe()
+    {
+        var directExeSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var allCoreInfo = CoreInfoManager.Instance.GetCoreInfo();
+
+        foreach (var coreConfig in allCoreInfo)
+        {
+            if (!context.ProtectCoreTypeList.Contains(coreConfig.CoreType))
+            {
+                continue;
+            }
+            if (coreConfig.CoreType == ECoreType.v2rayN)
+            {
+                continue;
+            }
+            if (coreConfig.CoreExes == null)
+            {
+                continue;
+            }
+            if (coreConfig.CoreType == ECoreType.Xray)
+            {
+                directExeSet.Add("xray/");
+                continue;
+            }
+            foreach (var baseExeName in coreConfig.CoreExes)
+            {
+                //directExeSet.Add(Utils.GetExeName(baseExeName));
+                var exePath = CoreInfoManager.Instance.GetCoreExecFile(coreConfig, out _);
+                if (!exePath.IsNullOrEmpty())
+                {
+                    directExeSet.Add(exePath);
+                }
+            }
+        }
+        //directExeSet.Add("xray/");
+        directExeSet.Add("self/");
+
+        return directExeSet.ToList();
     }
 }

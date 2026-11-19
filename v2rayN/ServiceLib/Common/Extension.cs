@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace ServiceLib.Common;
 
@@ -47,7 +48,7 @@ public static class Extension
 
     public static string TrimEx(this string? value)
     {
-        return value == null ? string.Empty : value.Trim();
+        return value?.Trim() ?? string.Empty;
     }
 
     public static string RemovePrefix(this string value, char prefix)
@@ -92,7 +93,7 @@ public static class Extension
 
     public static bool IsComplexType(this EConfigType configType)
     {
-        return configType is EConfigType.Custom or EConfigType.PolicyGroup or EConfigType.ProxyChain;
+        return configType is EConfigType.Custom or EConfigType.Outbound or EConfigType.PolicyGroup or EConfigType.ProxyChain;
     }
 
     /// <summary>
@@ -117,5 +118,41 @@ public static class Extension
         {
             destination.Add(item);
         }
+    }
+
+    /// <summary>
+    /// Replace all cross-platform newline characters with the specified string
+    /// </summary>
+    public static string ReplaceLineBreaks(this string input, string replacement)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
+
+        // You must replace \r\n first, and then replace the single characters \r and \n.
+        return input.Replace("\r\n", replacement)
+                    .Replace("\r", replacement)
+                    .Replace("\n", replacement);
+    }
+
+    public static IObservable<TOutput> HandleSafe<TInput, TOutput>(
+        this Interaction<TInput, TOutput> interaction, TInput input,
+        TOutput defaultValue = default!,
+        [CallerMemberName] string memberName = "",
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+    {
+        return Signal.Defer(() => interaction.WhenHandled(input))
+            .Catch<TOutput, UnhandledInteractionException<TInput, TOutput>>(ex =>
+            {
+                Logging.SaveLog($"Unhandled interaction exception in {memberName} at {filePath}:{lineNumber}", ex);
+                return Signal.Return(defaultValue);
+            })
+            .Catch<TOutput, Exception>(ex =>
+            {
+                Logging.SaveLog($"Exception occurred while handling interaction in {memberName} at {filePath}:{lineNumber}, input: {input}", ex);
+                return Signal.Return(defaultValue);
+            });
     }
 }

@@ -71,7 +71,7 @@ public class SocksFmt : BaseFmt
             return null;
         }
         var arr21 = arr1.First().Split(':');
-        var indexPort = arr1.Last().LastIndexOf(":");
+        var indexPort = arr1.Last().LastIndexOf(':');
         if (arr21.Length != 2 || indexPort < 0)
         {
             return null;
@@ -86,7 +86,10 @@ public class SocksFmt : BaseFmt
     private static ProfileItem? ResolveSocksNew(string result)
     {
         var parsedUrl = Utils.TryUri(result);
-        if (parsedUrl == null)
+        // A legacy socks://base64(user:pass@host:port) link has no port of its own, but System.Uri
+        // accepts many of them, reading the base64 as the host (and whatever follows a '/' as the
+        // path). Leave those to ResolveSocks.
+        if (parsedUrl == null || parsedUrl.Port == -1)
         {
             return null;
         }
@@ -99,12 +102,17 @@ public class SocksFmt : BaseFmt
         };
         // parse base64 UserInfo
         var rawUserInfo = Utils.UrlDecode(parsedUrl.UserInfo);
-        var userInfo = Utils.Base64Decode(rawUserInfo);
-        var userInfoParts = userInfo.Split([':'], 2);
-        if (userInfoParts.Length == 2)
+        if (rawUserInfo.IsNotEmpty())
         {
-            item.Username = userInfoParts.First();
-            item.Password = userInfoParts[1];
+            var userInfoParts = rawUserInfo.Contains(':')
+                ? rawUserInfo.Split(":", 2)
+                : Utils.Base64Decode(rawUserInfo).Split(":", 2);
+
+            if (userInfoParts.Length == 2)
+            {
+                item.Username = userInfoParts.First();
+                item.Password = userInfoParts.Last();
+            }
         }
 
         return item;

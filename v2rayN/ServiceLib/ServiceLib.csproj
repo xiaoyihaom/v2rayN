@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
@@ -6,21 +6,22 @@
 
 	<ItemGroup>
 		<PackageReference Include="Downloader" />
+		<PackageReference Include="IPNetwork2" />
 		<PackageReference Include="ReactiveUI">
 			<TreatAsUsed>true</TreatAsUsed>
 		</PackageReference>
-		<PackageReference Include="ReactiveUI.Fody" />
-		<PackageReference Include="sqlite-net-pcl" />
+		<PackageReference Include="sqlite-net-e" />
+		<PackageReference Include="Repobot.SQLite.Unofficial" />
 		<PackageReference Include="NLog" />
 		<PackageReference Include="WebDav.Client" />
 		<PackageReference Include="YamlDotNet" />
 		<PackageReference Include="QRCoder" />
 		<PackageReference Include="CliWrap" />
 		<PackageReference Include="ZXing.Net.Bindings.SkiaSharp" />
-		<PackageReference Include="TaskScheduler" />
 	</ItemGroup>
 
 	<ItemGroup>
+        <EmbeddedResource Include="Sample\chrome_roots_pem" />
 		<EmbeddedResource Include="Sample\clash_mixin_yaml" />
 		<EmbeddedResource Include="Sample\clash_tun_yaml" />
 		<EmbeddedResource Include="Sample\custom_routing_black" />
@@ -30,6 +31,7 @@
 		<EmbeddedResource Include="Sample\dns_v2ray_normal" />
 		<EmbeddedResource Include="Sample\kill_as_sudo_linux_sh" />
 		<EmbeddedResource Include="Sample\kill_as_sudo_osx_sh" />
+        <EmbeddedResource Include="Sample\mozilla_roots_pem" />
 		<EmbeddedResource Include="Sample\pac" />
 		<EmbeddedResource Include="Sample\proxy_set_linux_sh" /> 
 		<EmbeddedResource Include="Sample\proxy_set_osx_sh" />
@@ -38,8 +40,11 @@
 		<EmbeddedResource Include="Sample\SampleHttpResponse" />
 		<EmbeddedResource Include="Sample\SampleInbound" />
 		<EmbeddedResource Include="Sample\SampleOutbound" />
+		<EmbeddedResource Include="Sample\SampleTunInbound" />
+		<EmbeddedResource Include="Sample\SampleTunRules" />
 		<EmbeddedResource Include="Sample\SingboxSampleClientConfig" />
 		<EmbeddedResource Include="Sample\SingboxSampleOutbound" />
+		<EmbeddedResource Include="Sample\TaskXmlTemplate" />
 		<EmbeddedResource Include="Sample\tun_singbox_dns" />
 		<EmbeddedResource Include="Sample\tun_singbox_inbound" />
 		<EmbeddedResource Include="Sample\tun_singbox_rules" />
@@ -53,7 +58,10 @@
 			<DesignTime>True</DesignTime>
 			<AutoGen>True</AutoGen>
 		</Compile>
-		<EmbeddedResource Update="Resx\ResUI.fa-Ir.resx">
+		<EmbeddedResource Update="Resx\ResUI.az.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+		</EmbeddedResource>
+		<EmbeddedResource Update="Resx\ResUI.fa.resx">
 			<SubType>Designer</SubType>
 			<Generator>PublicResXFileCodeGenerator</Generator>
 		</EmbeddedResource>
@@ -61,6 +69,9 @@
 			<Generator>PublicResXFileCodeGenerator</Generator>
 		</EmbeddedResource>
 		<EmbeddedResource Update="Resx\ResUI.hu.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+		</EmbeddedResource>
+        <EmbeddedResource Update="Resx\ResUI.id.resx">
 			<Generator>PublicResXFileCodeGenerator</Generator>
 		</EmbeddedResource>
 		<EmbeddedResource Update="Resx\ResUI.resx">
@@ -81,5 +92,9 @@
 			<Generator>PublicResXFileCodeGenerator</Generator>
 		</EmbeddedResource>
 	</ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\ServiceLib.UdpTest\ServiceLib.UdpTest.csproj" />
+    </ItemGroup>
 
 </Project>

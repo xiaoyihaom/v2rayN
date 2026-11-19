@@ -5,10 +5,11 @@
     xmlns:dialogHost="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
     xmlns:resx="clr-namespace:ServiceLib.Resx;assembly=ServiceLib"
     xmlns:semi="https://irihi.tech/semi"
+    xmlns:service="clr-namespace:ServiceLib;assembly=ServiceLib"
     xmlns:vms="clr-namespace:ServiceLib.ViewModels;assembly=ServiceLib"
     Name="v2rayN"
     x:DataType="vms:StatusBarViewModel"
-    RequestedThemeVariant="Default">    
+    RequestedThemeVariant="Default">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -19,9 +20,9 @@
     <Application.Styles>
         <semi:SemiTheme />
         <semi:AvaloniaEditSemiTheme />
-        <StyleInclude Source="Assets/GlobalStyles.axaml" />
         <StyleInclude Source="avares://Semi.Avalonia.DataGrid/Index.axaml" />
         <dialogHost:DialogHostStyles />
+        <StyleInclude Source="Assets/GlobalStyles.axaml" />
     </Application.Styles>
 
     <TrayIcon.Icons>
@@ -29,7 +30,7 @@
             <TrayIcon
                 Command="{Binding NotifyLeftClickCmd}"
                 Icon="/Assets/NotifyIcon1.ico"
-                ToolTipText="{Binding RunningServerToolTipText}">
+                ToolTipText="{Binding RunningServerToolTipText, FallbackValue={x:Static service:Global.AppName}}">
                 <TrayIcon.Menu>
                     <NativeMenu>
                         <NativeMenuItem

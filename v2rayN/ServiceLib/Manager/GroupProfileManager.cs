@@ -9,7 +9,7 @@ public class GroupProfileManager
 
     public static async Task<bool> HasCycle(string? indexId, ProtocolExtraItem? extraInfo)
     {
-        return await HasCycle(indexId, extraInfo, new HashSet<string>(), new HashSet<string>());
+        return await HasCycle(indexId, extraInfo, [], []);
     }
 
     private static async Task<bool> HasCycle(string? indexId, ProtocolExtraItem? extraInfo, HashSet<string> visited, HashSet<string> stack)
@@ -52,10 +52,10 @@ public class GroupProfileManager
                 return false;
             }
 
-            var childItems = await AppManager.Instance.GetProfileItemsByIndexIds(childIds);
+            var childItems = await ConfigDbQuery.GetProfileItemsByIndexIds(childIds);
             foreach (var childItem in childItems)
             {
-                if (await HasCycle(childItem.IndexId, childItem?.GetProtocolExtra(), visited, stack))
+                if (await HasCycle(childItem.IndexId, childItem.GetProtocolExtra(), visited, stack))
                 {
                     return true;
                 }
@@ -71,7 +71,7 @@ public class GroupProfileManager
 
     public static async Task<(List<ProfileItem> Items, ProtocolExtraItem? Extra)> GetChildProfileItems(ProfileItem profileItem)
     {
-        var protocolExtra = profileItem?.GetProtocolExtra();
+        var protocolExtra = profileItem.GetProtocolExtra();
         return (await GetChildProfileItemsByProtocolExtra(protocolExtra), protocolExtra);
     }
 
@@ -103,7 +103,7 @@ public class GroupProfileManager
             return [];
         }
 
-        var ordered = await AppManager.Instance.GetProfileItemsOrderedByIndexIds(childProfileIds);
+        var ordered = await ConfigDbQuery.GetProfileItemsOrderedByIndexIds(childProfileIds);
         return ordered;
     }
 
@@ -113,13 +113,13 @@ public class GroupProfileManager
         {
             return [];
         }
-        var childProfiles = await AppManager.Instance.ProfileItems(extra.SubChildItems ?? string.Empty);
+        var childProfiles = await ConfigDbQuery.ProfileItems(extra.SubChildItems ?? string.Empty);
 
         return childProfiles?.Where(p =>
                 p != null &&
                 p.IsValid() &&
-                !p.ConfigType.IsComplexType() &&
-                (extra.Filter.IsNullOrEmpty() || Regex.IsMatch(p.Remarks, extra.Filter))
+                (!p.ConfigType.IsComplexType() || p.ConfigType == EConfigType.Outbound) &&
+                Utils.IsRegexMatch(p.Remarks, extra.Filter)
             )
             .ToList() ?? [];
     }

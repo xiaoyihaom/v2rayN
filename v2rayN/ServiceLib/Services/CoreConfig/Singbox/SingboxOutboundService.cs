@@ -11,7 +11,7 @@ public partial class CoreConfigSingboxService
     private List<BaseServer4Sbox> BuildAllProxyOutbounds(string baseTagName = Global.ProxyTag, bool withSelector = true)
     {
         var proxyOutboundList = new List<BaseServer4Sbox>();
-        if (!_node.ConfigType.IsComplexType())
+        if (!_node.ConfigType.IsGroupType())
         {
             var outbound = BuildProxyOutbound(baseTagName);
             proxyOutboundList.Add(outbound);
@@ -22,7 +22,7 @@ public partial class CoreConfigSingboxService
         }
         if (withSelector)
         {
-            var proxyTags = proxyOutboundList.Where(n => n.tag.StartsWith(Global.ProxyTag)).Select(n => n.tag).ToList();
+            var proxyTags = proxyOutboundList.Where(n => n.tag.StartsWith(baseTagName)).Select(n => n.tag).ToList();
             if (proxyTags.Count > 1)
             {
                 proxyOutboundList.InsertRange(0, BuildSelectorOutbounds(proxyTags, baseTagName));
@@ -35,6 +35,10 @@ public partial class CoreConfigSingboxService
     {
         var outbound = BuildProxyServer();
         outbound.tag = baseTagName;
+        if (_node.ConfigType == EConfigType.Outbound)
+        {
+            context.CustomOutboundMap[outbound] = _node.IndexId;
+        }
         return outbound;
     }
 
@@ -59,7 +63,21 @@ public partial class CoreConfigSingboxService
         try
         {
             var txtOutbound = EmbedUtils.GetEmbedText(Global.SingboxSampleOutbound);
-            if (_node.ConfigType == EConfigType.WireGuard)
+            if (_node.ConfigType == EConfigType.Outbound)
+            {
+                if (_node.GetProtocolExtra().IsSingboxEndpoint == true)
+                {
+                    var endpoint = JsonUtils.Deserialize<Endpoints4Sbox>(txtOutbound);
+                    return endpoint;
+                }
+                else
+                {
+                    var outbound = JsonUtils.Deserialize<Outbound4Sbox>(txtOutbound);
+                    return outbound;
+                }
+            }
+
+            if (_node.ConfigType is EConfigType.WireGuard or EConfigType.MASQUE)
             {
                 var endpoint = JsonUtils.Deserialize<Endpoints4Sbox>(txtOutbound);
                 FillEndpoint(endpoint);
@@ -84,6 +102,8 @@ public partial class CoreConfigSingboxService
         try
         {
             var protocolExtra = _node.GetProtocolExtra();
+            var transportExtra = _node.GetTransportExtra();
+            var network = _node.GetNetwork();
             outbound.server = _node.Address;
             outbound.server_port = _node.Port;
             outbound.type = Global.ProtocolTypes[_node.ConfigType];
@@ -114,26 +134,22 @@ public partial class CoreConfigSingboxService
                         outbound.password = _node.Password;
                         outbound.udp_over_tcp = protocolExtra.Uot == true ? true : null;
 
-                        if (_node.Network == nameof(ETransport.tcp) && _node.HeaderType == Global.TcpHeaderHttp)
+                        if (network == nameof(ETransport.raw) && transportExtra.RawHeaderType == Global.RawHeaderHttp)
                         {
                             outbound.plugin = "obfs-local";
-                            outbound.plugin_opts = $"obfs=http;obfs-host={_node.RequestHost};";
+                            outbound.plugin_opts = $"obfs=http;obfs-host={transportExtra.Host};";
                         }
                         else
                         {
                             var pluginArgs = string.Empty;
-                            if (_node.Network == nameof(ETransport.ws))
+                            if (network == nameof(ETransport.ws))
                             {
                                 pluginArgs += "mode=websocket;";
-                                pluginArgs += $"host={_node.RequestHost};";
+                                pluginArgs += $"host={transportExtra.Host};";
                                 // https://github.com/shadowsocks/v2ray-plugin/blob/e9af1cdd2549d528deb20a4ab8d61c5fbe51f306/args.go#L172
                                 // Equal signs and commas [and backslashes] must be escaped with a backslash.
-                                var path = _node.Path.Replace("\\", "\\\\").Replace("=", "\\=").Replace(",", "\\,");
+                                var path = (transportExtra.Path ?? string.Empty).Replace("\\", "\\\\").Replace("=", "\\=").Replace(",", "\\,");
                                 pluginArgs += $"path={path};";
-                            }
-                            else if (_node.Network == nameof(ETransport.quic))
-                            {
-                                pluginArgs += "mode=quic;";
                             }
                             if (_node.StreamSecurity == Global.StreamSecurity)
                             {
@@ -192,15 +208,16 @@ public partial class CoreConfigSingboxService
 
                         outbound.packet_encoding = "xudp";
 
-                        if (!protocolExtra.Flow.IsNullOrEmpty())
+                        if (protocolExtra.Flow is "xtls-rprx-vision" or "xtls-rprx-vision-udp443")
+                        {
+                            outbound.flow = "xtls-rprx-vision";
+                        }
+                        else if (!protocolExtra.Flow.IsNullOrEmpty())
                         {
                             outbound.flow = protocolExtra.Flow;
                         }
-                        else
-                        {
-                            FillOutboundMux(outbound);
-                        }
 
+                        FillOutboundMux(outbound);
                         FillOutboundTransport(outbound);
                         break;
                     }
@@ -218,18 +235,24 @@ public partial class CoreConfigSingboxService
 
                         if (!protocolExtra.SalamanderPass.IsNullOrEmpty())
                         {
+                            var isGecko = !protocolExtra.GeckoMinPacketSize.IsNullOrEmpty() || !protocolExtra.GeckoMaxPacketSize.IsNullOrEmpty();
                             outbound.obfs = new()
                             {
-                                type = "salamander",
+                                type = isGecko ? "gecko" : "salamander",
                                 password = protocolExtra.SalamanderPass.TrimEx(),
                             };
+                            if (isGecko)
+                            {
+                                outbound.obfs.min_packet_size = protocolExtra.GeckoMinPacketSize.ToInt();
+                                outbound.obfs.max_packet_size = protocolExtra.GeckoMaxPacketSize.ToInt();
+                            }
                         }
                         int? upMbps = protocolExtra?.UpMbps is { } su and >= 0
                             ? su
                             : _config.HysteriaItem.UpMbps;
                         int? downMbps = protocolExtra?.DownMbps is { } sd and >= 0
                             ? sd
-                            : _config.HysteriaItem.UpMbps;
+                            : _config.HysteriaItem.DownMbps;
                         outbound.up_mbps = upMbps > 0 ? upMbps : null;
                         outbound.down_mbps = downMbps > 0 ? downMbps : null;
                         var ports = protocolExtra?.Ports?.IsNullOrEmpty() == false ? protocolExtra.Ports : null;
@@ -254,15 +277,30 @@ public partial class CoreConfigSingboxService
                             }
                             else if (protocolExtra.HopInterval?.Contains('-') ?? false)
                             {
-                                // may be a range like 5-10
                                 var parts = protocolExtra.HopInterval.Split('-');
                                 if (parts.Length == 2 && int.TryParse(parts[0], out var hiL) &&
-                                    int.TryParse(parts[0], out var hiH))
+                                    int.TryParse(parts[1], out var hiH) && hiL >= 5 && hiH >= hiL)
                                 {
-                                    var hi = (hiL + hiH) / 2;
-                                    outbound.hop_interval = hi >= 5 ? $"{hi}s" : outbound.hop_interval;
+                                    outbound.hop_interval = $"{hiL}s";
+                                    outbound.hop_interval_max = $"{hiH}s";
                                 }
                             }
+                        }
+
+                        if (HyRealm.TryParse(protocolExtra.Hy2RealmUrl, out var realm)
+                            && realm is not null)
+                        {
+                            var realm4Sbox = new HyRealm4Sbox()
+                            {
+                                server_url = realm.ToServerUrl(),
+                                token = realm.Token,
+                                realm_id = realm.RealmName,
+                                stun_servers = realm.StunList?.Count > 0 ? realm.StunList : null,
+                            };
+                            outbound.realm = realm4Sbox;
+                            outbound.server = null;
+                            outbound.server_port = null;
+                            outbound.server_ports = null;
                         }
 
                         break;
@@ -311,26 +349,49 @@ public partial class CoreConfigSingboxService
         {
             var protocolExtra = _node.GetProtocolExtra();
 
-            endpoint.address = Utils.String2List(protocolExtra.WgInterfaceAddress);
             endpoint.type = Global.ProtocolTypes[_node.ConfigType];
 
             switch (_node.ConfigType)
             {
                 case EConfigType.WireGuard:
                     {
+                        endpoint.server = null;
+                        endpoint.server_port = null;
+                        endpoint.address = Utils.String2List(protocolExtra.WgInterfaceAddress)?.Select(s => s.Trim()).ToList() ?? ["172.16.0.2/32"];
                         var peer = new Peer4Sbox
                         {
-                            public_key = protocolExtra.WgPublicKey,
+                            public_key = protocolExtra.WgPublicKey ?? string.Empty,
                             pre_shared_key = protocolExtra.WgPresharedKey,
-                            reserved = Utils.String2List(protocolExtra.WgReserved)?.Select(int.Parse).ToList(),
+                            reserved = Utils.String2List(protocolExtra.WgReserved)?.Select(s => s.Trim()).Select(int.Parse).ToList(),
                             address = _node.Address,
                             port = _node.Port,
-                            // TODO default ["0.0.0.0/0", "::/0"]
-                            allowed_ips = new() { "0.0.0.0/0", "::/0" },
+                            allowed_ips = ["0.0.0.0/0", "::/0"],
                         };
                         endpoint.private_key = _node.Password;
                         endpoint.mtu = protocolExtra.WgMtu > 0 ? protocolExtra.WgMtu : Global.TunMtus.First();
                         endpoint.peers = [peer];
+                        break;
+                    }
+                case EConfigType.MASQUE:
+                    {
+                        endpoint.type = "masque-client";
+                        endpoint.server = _node.Address;
+                        endpoint.server_port = _node.Port;
+                        endpoint.username = _node.Username;
+                        endpoint.password = _node.Password;
+                        endpoint.path = protocolExtra?.MasquePath.NullIfEmpty();
+                        if (!string.IsNullOrEmpty(protocolExtra?.MasqueHeaders))
+                        {
+                            var headers = Utils.ParseHeaders(protocolExtra.MasqueHeaders)
+                                .GroupBy(x => x.Item1, StringComparer.OrdinalIgnoreCase)
+                                .ToDictionary(
+                                    g => g.Key,
+                                    g => g.Select(x => x.Item2).ToList(),
+                                    StringComparer.OrdinalIgnoreCase
+                                );
+                            endpoint.headers = headers.Count > 0 ? headers : null;
+                        }
+                        FillOutboundTls(endpoint);
                         break;
                     }
             }
@@ -345,7 +406,7 @@ public partial class CoreConfigSingboxService
     {
         try
         {
-            var muxEnabled = _node.MuxEnabled ?? _config.CoreBasicItem.MuxEnabled;
+            var muxEnabled = _node.MuxEnabled ?? false;
             if (muxEnabled && _config.Mux4SboxItem.Protocol.IsNotEmpty())
             {
                 var mux = new Multiplex4Sbox()
@@ -364,7 +425,7 @@ public partial class CoreConfigSingboxService
         }
     }
 
-    private void FillOutboundTls(Outbound4Sbox outbound)
+    private void FillOutboundTls(BaseServer4Sbox server)
     {
         try
         {
@@ -381,18 +442,31 @@ public partial class CoreConfigSingboxService
             {
                 serverName = _node.Sni;
             }
-            else if (_node.RequestHost.IsNotEmpty())
+            else
             {
-                serverName = Utils.String2List(_node.RequestHost)?.First();
+                var host = _node.GetNetwork() switch
+                {
+                    nameof(ETransport.raw) => _node.GetTransportExtra().Host,
+                    nameof(ETransport.ws) => _node.GetTransportExtra().Host,
+                    nameof(ETransport.httpupgrade) => _node.GetTransportExtra().Host,
+                    nameof(ETransport.xhttp) => _node.GetTransportExtra().Host,
+                    nameof(ETransport.grpc) => _node.GetTransportExtra().GrpcAuthority,
+                    _ => null,
+                };
+                serverName = Utils.String2List(host)?.First();
             }
             var tls = new Tls4Sbox()
             {
                 enabled = true,
-                record_fragment = _config.CoreBasicItem.EnableFragment ? true : null,
                 server_name = serverName,
-                insecure = Utils.ToBool(_node.AllowInsecure.IsNullOrEmpty() ? _config.CoreBasicItem.DefAllowInsecure.ToString().ToLower() : _node.AllowInsecure),
+                insecure = _node.GetAllowInsecure(),
                 alpn = _node.GetAlpn(),
             };
+            if (_config.CoreBasicItem.EnableFragment == true)
+            {
+                tls.fragment = true;
+                tls.record_fragment = true;
+            }
             if (_node.Fingerprint.IsNotEmpty())
             {
                 tls.utls = new Utls4Sbox()
@@ -425,7 +499,7 @@ public partial class CoreConfigSingboxService
             {
                 tls.ech = ech;
             }
-            outbound.tls = tls;
+            server.tls = tls;
         }
         catch (Exception ex)
         {
@@ -438,32 +512,38 @@ public partial class CoreConfigSingboxService
         try
         {
             var transport = new Transport4Sbox();
+            var transportExtra = _node.GetTransportExtra();
+            var useragent = _config.CoreBasicItem.DefUserAgent ?? string.Empty;
+            var useragentValue = Global.RawHttpUserAgentTexts.GetValueOrDefault(useragent, useragent);
 
             switch (_node.GetNetwork())
             {
-                case nameof(ETransport.h2):
-                    transport.type = nameof(ETransport.http);
-                    transport.host = _node.RequestHost.IsNullOrEmpty() ? null : Utils.String2List(_node.RequestHost);
-                    transport.path = _node.Path.NullIfEmpty();
-                    break;
-
-                case nameof(ETransport.tcp):   //http
-                    if (_node.HeaderType == Global.TcpHeaderHttp)
+                case nameof(ETransport.raw):   //http
+                    if (transportExtra.RawHeaderType == Global.RawHeaderHttp)
                     {
                         transport.type = nameof(ETransport.http);
-                        transport.host = _node.RequestHost.IsNullOrEmpty() ? null : Utils.String2List(_node.RequestHost);
-                        transport.path = _node.Path.NullIfEmpty();
+                        transport.host = transportExtra.Host.IsNullOrEmpty()
+                            ? null
+                            : JsonUtils.SerializeToArray(Utils.String2List(transportExtra.Host));
+                        transport.path = transportExtra.Path.NullIfEmpty();
+                        if (!useragentValue.IsNullOrEmpty())
+                        {
+                            transport.headers ??= new();
+                            transport.headers.UserAgent = useragentValue;
+                        }
                     }
                     break;
 
                 case nameof(ETransport.ws):
                     transport.type = nameof(ETransport.ws);
-                    var wsPath = _node.Path;
+                    var wsPath = transportExtra.Path;
 
                     // Parse eh and ed parameters from path using regex
                     if (!wsPath.IsNullOrEmpty())
                     {
-                        var edRegex = new Regex(@"[?&]ed=(\d+)");
+                        // Keep the '?' or '&' in front of "ed" out of the match, so removing it
+                        // leaves "/ws?ed=2048&key=value" as "/ws?key=value", not "/ws&key=value".
+                        var edRegex = new Regex(@"(?<=[?&])ed=(\d+)&?");
                         var edMatch = edRegex.Match(wsPath);
                         if (edMatch.Success && int.TryParse(edMatch.Groups[1].Value, out var edValue))
                         {
@@ -471,11 +551,7 @@ public partial class CoreConfigSingboxService
                             transport.early_data_header_name = "Sec-WebSocket-Protocol";
 
                             wsPath = edRegex.Replace(wsPath, "");
-                            wsPath = wsPath.Replace("?&", "?");
-                            if (wsPath.EndsWith('?'))
-                            {
-                                wsPath = wsPath.TrimEnd('?');
-                            }
+                            wsPath = wsPath.TrimEnd('&').TrimEnd('?');
                         }
 
                         var ehRegex = new Regex(@"[?&]eh=([^&]+)");
@@ -487,29 +563,35 @@ public partial class CoreConfigSingboxService
                     }
 
                     transport.path = wsPath.NullIfEmpty();
-                    if (_node.RequestHost.IsNotEmpty())
+                    if (transportExtra.Host.IsNotEmpty())
                     {
                         transport.headers = new()
                         {
-                            Host = _node.RequestHost
+                            Host = transportExtra.Host
                         };
+                    }
+                    if (!useragentValue.IsNullOrEmpty())
+                    {
+                        transport.headers ??= new();
+                        transport.headers.UserAgent = useragentValue;
                     }
                     break;
 
                 case nameof(ETransport.httpupgrade):
                     transport.type = nameof(ETransport.httpupgrade);
-                    transport.path = _node.Path.NullIfEmpty();
-                    transport.host = _node.RequestHost.NullIfEmpty();
+                    transport.path = transportExtra.Path.NullIfEmpty();
+                    transport.host = transportExtra.Host.NullIfEmpty();
+                    if (!useragentValue.IsNullOrEmpty())
+                    {
+                        transport.headers ??= new();
+                        transport.headers.UserAgent = useragentValue;
+                    }
 
-                    break;
-
-                case nameof(ETransport.quic):
-                    transport.type = nameof(ETransport.quic);
                     break;
 
                 case nameof(ETransport.grpc):
                     transport.type = nameof(ETransport.grpc);
-                    transport.service_name = _node.Path;
+                    transport.service_name = transportExtra.GrpcServiceName;
                     transport.idle_timeout = _config.GrpcItem.IdleTimeout?.ToString("##s");
                     transport.ping_timeout = _config.GrpcItem.HealthCheckTimeout?.ToString("##s");
                     transport.permit_without_stream = _config.GrpcItem.PermitWithoutStream;
@@ -550,7 +632,7 @@ public partial class CoreConfigSingboxService
         {
             type = "selector",
             tag = baseTagName,
-            outbounds = JsonUtils.DeepCopy(proxyTags),
+            outbounds = [.. proxyTags],
             interrupt_exist_connections = false,
         };
         outSelector.outbounds.Insert(0, outUrltest.tag);
@@ -678,9 +760,9 @@ public partial class CoreConfigSingboxService
         return resultOutbounds;
     }
 
-    private static List<BaseServer4Sbox> CloneOutbounds(List<BaseServer4Sbox> source)
+    private List<BaseServer4Sbox> CloneOutbounds(List<BaseServer4Sbox> source)
     {
-        if (source is null || source.Count == 0)
+        if (source is not { Count: > 0 })
         {
             return [];
         }
@@ -697,9 +779,14 @@ public partial class CoreConfigSingboxService
             {
                 clone = JsonUtils.DeepCopy(endpoint);
             }
-            if (clone is not null)
+            if (clone is null)
             {
-                result.Add(clone);
+                continue;
+            }
+            result.Add(clone);
+            if (context.CustomOutboundMap.ContainsKey(item))
+            {
+                context.CustomOutboundMap[clone] = context.CustomOutboundMap[item];
             }
         }
         return result;
@@ -713,8 +800,8 @@ public partial class CoreConfigSingboxService
             {
                 return;
             }
-            var outbounds = servers.Where(s => s is Outbound4Sbox).Cast<Outbound4Sbox>().ToList();
-            var endpoints = servers.Where(s => s is Endpoints4Sbox).Cast<Endpoints4Sbox>().ToList();
+            var outbounds = servers.OfType<Outbound4Sbox>().ToList();
+            var endpoints = servers.OfType<Endpoints4Sbox>().ToList();
             singboxConfig.endpoints ??= [];
             if (prepend)
             {

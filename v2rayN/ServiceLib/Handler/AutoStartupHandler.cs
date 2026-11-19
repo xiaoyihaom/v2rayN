@@ -1,5 +1,3 @@
-using System.Security.Principal;
-
 namespace ServiceLib.Handler;
 
 public static class AutoStartupHandler
@@ -41,6 +39,7 @@ public static class AutoStartupHandler
 
     #region Windows
 
+    [SupportedOSPlatform("windows")]
     private static async Task ClearTaskWindows()
     {
         var autoRunName = GetAutoRunNameWindows();
@@ -53,6 +52,7 @@ public static class AutoStartupHandler
         await Task.CompletedTask;
     }
 
+    [SupportedOSPlatform("windows")]
     private static async Task SetTaskWindows()
     {
         try
@@ -82,8 +82,10 @@ public static class AutoStartupHandler
     /// <param name="fileName"></param>
     /// <param name="description"></param>
     /// <exception cref="ArgumentNullException"></exception>
+    [SupportedOSPlatform("windows")]
     public static void AutoStartTaskService(string taskName, string fileName, string description)
     {
+#if false
         if (taskName.IsNullOrEmpty())
         {
             return;
@@ -108,11 +110,84 @@ public static class AutoStartupHandler
         task.Settings.RunOnlyIfIdle = false;
         task.Settings.IdleSettings.StopOnIdleEnd = false;
         task.Settings.ExecutionTimeLimit = TimeSpan.Zero;
-        task.Triggers.Add(new Microsoft.Win32.TaskScheduler.LogonTrigger { UserId = logonUser, Delay = TimeSpan.FromSeconds(30) });
+        task.Settings.Priority = ProcessPriorityClass.Normal;
+        task.Triggers.Add(new Microsoft.Win32.TaskScheduler.LogonTrigger { UserId = logonUser });
         task.Principal.RunLevel = Microsoft.Win32.TaskScheduler.TaskRunLevel.Highest;
         task.Actions.Add(new Microsoft.Win32.TaskScheduler.ExecAction(fileName.AppendQuotes(), null, Path.GetDirectoryName(fileName)));
 
         taskService.RootFolder.RegisterTaskDefinition(taskName, task);
+#endif
+        if (string.IsNullOrEmpty(taskName))
+        {
+            return;
+        }
+
+        RunSchtasks($"/Delete /TN \"{taskName}\" /F");
+
+        if (string.IsNullOrEmpty(fileName))
+        {
+            return;
+        }
+
+        var workingDir = Path.GetDirectoryName(fileName) ?? string.Empty;
+
+        var taskXml = EmbedUtils.GetEmbedText(Global.TaskXmlTemplateFileName);
+
+        taskXml = taskXml
+            .Replace("{{DESCRIPTION}}", System.Security.SecurityElement.Escape(description ?? ""))
+            .Replace("{{EXEC_PATH}}", System.Security.SecurityElement.Escape(fileName ?? ""))
+            .Replace("{{ARGUMENTS}}", string.Empty)
+            .Replace("{{WORKING_DIRECTORY}}", System.Security.SecurityElement.Escape(workingDir ?? ""));
+
+        var taskXmlFileName = Utils.GetTempPath($"{Utils.GetGuid(false)}.xml");
+
+        File.WriteAllText(taskXmlFileName, taskXml);
+
+        RunSchtasks(
+            "/Create",
+            "/TN", taskName,
+            "/XML", taskXmlFileName,
+            "/F"
+        );
+    }
+
+    private static bool RunSchtasks(params string[] arguments)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "schtasks.exe",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+
+        foreach (var argument in arguments)
+        {
+            psi.ArgumentList.Add(argument);
+        }
+
+        using var process = Process.Start(psi);
+
+        if (process == null)
+        {
+            return false;
+        }
+
+        process.WaitForExit();
+
+        var output = process.StandardOutput.ReadToEnd();
+        var error = process.StandardError.ReadToEnd();
+        if (!string.IsNullOrEmpty(output))
+        {
+            Logging.SaveLog($"RunSchtasks output: {output}");
+        }
+        if (!string.IsNullOrEmpty(error))
+        {
+            Logging.SaveLog($"RunSchtasks error: {error}");
+        }
+
+        return process.ExitCode == 0;
     }
 
     private static string GetAutoRunNameWindows()
@@ -124,6 +199,7 @@ public static class AutoStartupHandler
 
     #region Linux
 
+    [SupportedOSPlatform("linux")]
     private static async Task ClearTaskLinux()
     {
         try
@@ -137,6 +213,7 @@ public static class AutoStartupHandler
         await Task.CompletedTask;
     }
 
+    [SupportedOSPlatform("linux")]
     private static async Task SetTaskLinux()
     {
         try
@@ -157,6 +234,7 @@ public static class AutoStartupHandler
         }
     }
 
+    [SupportedOSPlatform("linux")]
     private static string GetHomePathLinux()
     {
         var homePath = Path.Combine(Utils.GetHomePath(), ".config", "autostart", $"{Global.AppName}.desktop");
@@ -168,25 +246,24 @@ public static class AutoStartupHandler
 
     #region macOS
 
+    [SupportedOSPlatform("macos")]
     private static async Task ClearTaskOSX()
     {
         try
         {
-            var launchAgentPath = GetLaunchAgentPathMacOS();
-            if (File.Exists(launchAgentPath))
-            {
-                var args = new[] { "-c", $"launchctl unload -w \"{launchAgentPath}\"" };
-                await Utils.GetCliWrapOutput(Global.LinuxBash, args);
-
-                File.Delete(launchAgentPath);
-            }
+            // Do not "launchctl unload" the agent: launchd then terminates the job's processes, which is
+            // v2rayN itself when it was started at login. The agent only runs at load, so removing the
+            // plist is enough to stop the next start.
+            File.Delete(GetLaunchAgentPathMacOS());
         }
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
         }
+        await Task.CompletedTask;
     }
 
+    [SupportedOSPlatform("macos")]
     private static async Task SetTaskOSX()
     {
         try
@@ -204,6 +281,7 @@ public static class AutoStartupHandler
         }
     }
 
+    [SupportedOSPlatform("macos")]
     private static string GetLaunchAgentPathMacOS()
     {
         var homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -212,6 +290,7 @@ public static class AutoStartupHandler
         return launchAgentPath;
     }
 
+    [SupportedOSPlatform("macos")]
     private static string GenerateLaunchAgentPlist()
     {
         var exePath = Utils.GetExePath();

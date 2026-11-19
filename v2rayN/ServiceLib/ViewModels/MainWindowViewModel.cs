@@ -1,79 +1,98 @@
-using System.Reactive.Concurrency;
-
 namespace ServiceLib.ViewModels;
 
-public class MainWindowViewModel : MyReactiveObject
+public partial class MainWindowViewModel : MyReactiveObject
 {
+    public Interaction<RxVoid, string?> ReadTextFromClipboardInteraction { get; } = new();
+    public Interaction<RxVoid, byte[]?> ScanScreenInteraction { get; } = new();
+    public Interaction<RxVoid, string?> BrowseImageFileInteraction { get; } = new();
+    public Interaction<bool?, RxVoid> ShowHideWindowInteraction { get; } = new();
+
+    public bool DesignMode { get; set; }
+
+    public ProfilesViewModel ProfilesViewModel { get; } = new();
+    public MsgViewModel MsgViewModel { get; } = new();
+    public ClashProxiesViewModel ClashProxiesViewModel { get; } = new();
+    public ClashConnectionsViewModel ClashConnectionsViewModel { get; } = new();
+    public CheckUpdateViewModel CheckUpdateViewModel { get; } = new();
+    public BackupAndRestoreViewModel BackupAndRestoreViewModel { get; } = new();
+    public StatusBarViewModel StatusBarViewModel { get; } = StatusBarViewModel.Instance;
+
     #region Menu
 
     //servers
-    public ReactiveCommand<Unit, Unit> AddVmessServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddVmessServerCmd { get; }
 
-    public ReactiveCommand<Unit, Unit> AddVlessServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddShadowsocksServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddSocksServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddHttpServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddTrojanServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddHysteria2ServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddTuicServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddWireguardServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddAnytlsServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddNaiveServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddCustomServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddPolicyGroupServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddProxyChainServerCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddServerViaClipboardCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddServerViaScanCmd { get; }
-    public ReactiveCommand<Unit, Unit> AddServerViaImageCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddVlessServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddShadowsocksServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddSocksServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddHttpServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddTrojanServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddHysteria2ServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddTuicServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddWireguardServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddAnytlsServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddNaiveServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddMasqueServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddCustomServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddCustomOutboundServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddPolicyGroupServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddProxyChainServerCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddServerViaClipboardCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddServerViaScanCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> AddServerViaImageCmd { get; }
 
     //Subscription
-    public ReactiveCommand<Unit, Unit> SubSettingCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> SubSettingCmd { get; }
 
-    public ReactiveCommand<Unit, Unit> SubUpdateCmd { get; }
-    public ReactiveCommand<Unit, Unit> SubUpdateViaProxyCmd { get; }
-    public ReactiveCommand<Unit, Unit> SubGroupUpdateCmd { get; }
-    public ReactiveCommand<Unit, Unit> SubGroupUpdateViaProxyCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> SubUpdateCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> SubUpdateViaProxyCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> SubGroupUpdateCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> SubGroupUpdateViaProxyCmd { get; }
 
     //Setting
-    public ReactiveCommand<Unit, Unit> OptionSettingCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> OptionSettingCmd { get; }
 
-    public ReactiveCommand<Unit, Unit> RoutingSettingCmd { get; }
-    public ReactiveCommand<Unit, Unit> DNSSettingCmd { get; }
-    public ReactiveCommand<Unit, Unit> FullConfigTemplateCmd { get; }
-    public ReactiveCommand<Unit, Unit> GlobalHotkeySettingCmd { get; }
-    public ReactiveCommand<Unit, Unit> RebootAsAdminCmd { get; }
-    public ReactiveCommand<Unit, Unit> ClearServerStatisticsCmd { get; }
-    public ReactiveCommand<Unit, Unit> OpenTheFileLocationCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> RoutingSettingCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> DNSSettingCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> FullConfigTemplateCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> GlobalHotkeySettingCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> RebootAsAdminCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> ClearServerStatisticsCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> OpenTheFileLocationCmd { get; }
 
     //Presets
-    public ReactiveCommand<Unit, Unit> RegionalPresetDefaultCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> RegionalPresetDefaultCmd { get; }
 
-    public ReactiveCommand<Unit, Unit> RegionalPresetRussiaCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> RegionalPresetRussiaCmd { get; }
 
-    public ReactiveCommand<Unit, Unit> RegionalPresetIranCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> RegionalPresetIranCmd { get; }
 
-    public ReactiveCommand<Unit, Unit> ReloadCmd { get; }
-
-    [Reactive]
-    public bool BlReloadEnabled { get; set; }
+    public ReactiveCommand<RxVoid, RxVoid> ReloadCmd { get; }
 
     [Reactive]
-    public bool ShowClashUI { get; set; }
+    public partial bool BlReloadEnabled { get; set; }
 
     [Reactive]
-    public int TabMainSelectedIndex { get; set; }
+    public partial bool ShowClashUI { get; set; }
 
-    [Reactive] public bool BlIsWindows { get; set; }
+    [Reactive]
+    public partial int TabMainSelectedIndex { get; set; }
+
+    [Reactive] public partial bool BlIsWindows { get; set; }
+
+    [Reactive] public partial bool BlNewUpdate { get; set; }
+
+    [Reactive] public partial EGirdOrientation MainGirdOrientation { get; set; }
 
     #endregion Menu
 
     #region Init
 
-    public MainWindowViewModel(Func<EViewAction, object?, Task<bool>>? updateView)
+    public MainWindowViewModel()
     {
-        _config = AppManager.Instance.Config;
-        _updateView = updateView;
+        _config = ConfigTextHandler.Config;
         BlIsWindows = Utils.IsWindows();
+        MainGirdOrientation = _config.UiItem.MainGirdOrientation;
 
         #region WhenAnyValue && ReactiveCommand
 
@@ -122,9 +141,17 @@ public class MainWindowViewModel : MyReactiveObject
         {
             await AddServerAsync(EConfigType.Naive);
         });
+        AddMasqueServerCmd = ReactiveCommand.CreateFromTask(async () =>
+        {
+            await AddServerAsync(EConfigType.MASQUE);
+        });
         AddCustomServerCmd = ReactiveCommand.CreateFromTask(async () =>
         {
             await AddServerAsync(EConfigType.Custom);
+        });
+        AddCustomOutboundServerCmd = ReactiveCommand.CreateFromTask(async () =>
+        {
+            await AddServerAsync(EConfigType.Outbound);
         });
         AddPolicyGroupServerCmd = ReactiveCommand.CreateFromTask(async () =>
         {
@@ -189,7 +216,8 @@ public class MainWindowViewModel : MyReactiveObject
         });
         GlobalHotkeySettingCmd = ReactiveCommand.CreateFromTask(async () =>
         {
-            if (await _updateView?.Invoke(EViewAction.GlobalHotkeySettingWindow, null) == true)
+            var globalHotkeySettingViewModel = new GlobalHotkeySettingViewModel();
+            if (await AppManager.Instance.WindowDialog.ShowDialogAsync(globalHotkeySettingViewModel) == true)
             {
                 NoticeManager.Instance.Enqueue(ResUI.OperationSuccess);
             }
@@ -231,27 +259,59 @@ public class MainWindowViewModel : MyReactiveObject
 
         #region AppEvents
 
-        AppEvents.ReloadRequested
-            .AsObservable()
-            .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe(async _ => await Reload());
-
-        AppEvents.AddServerViaScanRequested
-            .AsObservable()
-            .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe(async _ => await AddServerViaScanAsync());
-
         AppEvents.AddServerViaClipboardRequested
             .AsObservable()
             .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe(async _ => await AddServerViaClipboardAsync(null));
+            .SubscribeAsync(async _ => await AddServerViaClipboardAsync(null));
 
-        AppEvents.SubscriptionsUpdateRequested
+        AppEvents.HasUpdateNotified
             .AsObservable()
             .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe(async blProxy => await UpdateSubscriptionProcess("", blProxy));
+            .Subscribe(bl => BlNewUpdate = bl);
 
         #endregion AppEvents
+
+        ProfilesViewModel.RefreshServersRequested
+            .AsObservable()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .SubscribeAsync(async _ => await RefreshServersDispatcherAsync());
+
+        var vmReloadRequestedList = new List<IObservable<RxVoid>>
+        {
+            ProfilesViewModel.ReloadRequested.AsObservable(),
+            StatusBarViewModel.ReloadRequested.AsObservable(),
+            CheckUpdateViewModel.ReloadRequested.AsObservable(),
+        };
+
+        foreach (var reloadRequested in vmReloadRequestedList)
+        {
+            reloadRequested
+                .ObserveOn(RxSchedulers.MainThreadScheduler)
+                .SubscribeAsync(async _ => await Reload());
+        }
+
+        StatusBarViewModel.AddServerViaScanRequested
+            .AsObservable()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .SubscribeAsync(async _ => await AddServerViaScanAsync());
+
+        StatusBarViewModel.AddServerViaClipboardRequested
+            .AsObservable()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .SubscribeAsync(async _ => await AddServerViaClipboardAsync(null));
+
+        StatusBarViewModel.ShowHideWindowRequested
+            .AsObservable()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .SubscribeAsync(async blShow =>
+            {
+                await ShowHideWindowInteraction.HandleSafe(blShow);
+            });
+
+        StatusBarViewModel.SubscriptionsUpdateRequested
+            .AsObservable()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .SubscribeAsync(async blProxy => await UpdateSubscriptionProcess("", blProxy));
 
         _ = Init();
     }
@@ -260,18 +320,24 @@ public class MainWindowViewModel : MyReactiveObject
     {
         AppManager.Instance.ShowInTaskbar = true;
 
+        if (DesignMode)
+        {
+            return;
+        }
+
         //await ConfigHandler.InitBuiltinRouting(_config);
-        await ConfigHandler.InitBuiltinDNS(_config);
-        await ConfigHandler.InitBuiltinFullConfigTemplate(_config);
+        await ConfigDbHandler.InitBuiltinDNS();
+        await ConfigDbHandler.InitBuiltinFullConfigTemplate();
         await ProfileExManager.Instance.Init();
         await CoreManager.Instance.Init(_config, UpdateHandler);
+        await CertPemManager.Instance.Init(_config);
         TaskManager.Instance.RegUpdateTask(_config, UpdateTaskHandler);
 
         if (_config.GuiItem.EnableStatistics || _config.GuiItem.DisplayRealTimeSpeed)
         {
             await StatisticsManager.Instance.Init(_config, UpdateStatisticsHandler);
         }
-        await RefreshServers();
+        await RefreshServersDispatcherAsync();
 
         await Reload();
     }
@@ -295,15 +361,16 @@ public class MainWindowViewModel : MyReactiveObject
         NoticeManager.Instance.SendMessageEx(msg);
         if (success)
         {
-            var indexIdOld = _config.IndexId;
-            await RefreshServers();
-            if (indexIdOld != _config.IndexId)
+            await RefreshServersDispatcherAsync();
+
+            if (_config.IndexId != _config.PreIndexId)
             {
                 await Reload();
             }
+
             if (_config.UiItem.EnableAutoAdjustMainLvColWidth)
             {
-                AppEvents.AdjustMainLvColWidthRequested.Publish();
+                await ProfilesViewModel.AdjustMainLvColWidth();
             }
         }
     }
@@ -322,16 +389,46 @@ public class MainWindowViewModel : MyReactiveObject
 
     #region Servers && Groups
 
+    private readonly SemaphoreSlim _refreshServersSemaphore = new(1, 1);
+
     private async Task RefreshServers()
     {
-        AppEvents.ProfilesRefreshRequested.Publish();
+        await ProfilesViewModel.RefreshServersBiz();
+        await StatusBarViewModel.RefreshServersBiz();
 
-        await Task.Delay(200);
+        // await Task.Delay(200);
     }
 
-    private void RefreshSubscriptions()
+    private async Task RefreshServersDispatcherAsync()
     {
-        AppEvents.SubscriptionsRefreshRequested.Publish();
+        //await Observable.Start(async () => await RefreshServers(), RxSchedulers.MainThreadScheduler);
+        await _refreshServersSemaphore.WaitAsync();
+        try
+        {
+            await Signal.FromAsync(async () =>
+            {
+                await RefreshServers();
+                return RxVoid.Default;
+            })
+                .SubscribeOn(RxSchedulers.MainThreadScheduler)
+                .ToTask();
+        }
+        finally
+        {
+            _refreshServersSemaphore.Release();
+        }
+    }
+
+    private async Task RefreshSubscriptions()
+    {
+        //await Observable.Start(async () => await ProfilesViewModel.RefreshSubscriptions(), RxSchedulers.MainThreadScheduler);
+        await Signal.FromAsync(async () =>
+            {
+                await ProfilesViewModel.RefreshSubscriptions();
+                return RxVoid.Default;
+            })
+            .SubscribeOn(RxSchedulers.MainThreadScheduler)
+            .ToTask();
     }
 
     #endregion Servers && Groups
@@ -348,21 +445,24 @@ public class MainWindowViewModel : MyReactiveObject
         };
 
         bool? ret = false;
-        if (eConfigType == EConfigType.Custom)
+        if (eConfigType is EConfigType.Custom or EConfigType.Outbound)
         {
-            ret = await _updateView?.Invoke(EViewAction.AddServer2Window, item);
+            var addServer2ViewModel = new AddServer2ViewModel(item);
+            ret = await AppManager.Instance.WindowDialog.ShowDialogAsync(addServer2ViewModel);
         }
         else if (eConfigType.IsGroupType())
         {
-            ret = await _updateView?.Invoke(EViewAction.AddGroupServerWindow, item);
+            var addGroupServerViewModel = new AddGroupServerViewModel(item);
+            ret = await AppManager.Instance.WindowDialog.ShowDialogAsync(addGroupServerViewModel);
         }
         else
         {
-            ret = await _updateView?.Invoke(EViewAction.AddServerWindow, item);
+            var addServerViewModel = new AddServerViewModel(item);
+            ret = await AppManager.Instance.WindowDialog.ShowDialogAsync(addServerViewModel);
         }
         if (ret == true)
         {
-            await RefreshServers();
+            await RefreshServersDispatcherAsync();
             if (item.IndexId == _config.IndexId)
             {
                 await Reload();
@@ -372,16 +472,22 @@ public class MainWindowViewModel : MyReactiveObject
 
     public async Task AddServerViaClipboardAsync(string? clipboardData)
     {
+        var stringData = clipboardData;
         if (clipboardData == null)
         {
-            await _updateView?.Invoke(EViewAction.AddServerViaClipboard, null);
-            return;
+            var result = await ReadTextFromClipboardInteraction.HandleSafe(RxVoid.Default);
+            if (result.IsNullOrEmpty())
+            {
+                NoticeManager.Instance.Enqueue(ResUI.OperationFailed);
+                return;
+            }
+            stringData = result;
         }
-        var ret = await ConfigHandler.AddBatchServers(_config, clipboardData, _config.SubIndexId, false);
+        var ret = await ConfigDbHandler.AddBatchServers(stringData, _config.SubIndexId, false);
         if (ret > 0)
         {
-            RefreshSubscriptions();
-            await RefreshServers();
+            await RefreshSubscriptions();
+            await RefreshServersDispatcherAsync();
             NoticeManager.Instance.Enqueue(string.Format(ResUI.SuccessfullyImportedServerViaClipboard, ret));
         }
         else
@@ -392,8 +498,8 @@ public class MainWindowViewModel : MyReactiveObject
 
     public async Task AddServerViaScanAsync()
     {
-        _updateView?.Invoke(EViewAction.ScanScreenTask, null);
-        await Task.CompletedTask;
+        var result = await ScanScreenInteraction.HandleSafe(RxVoid.Default);
+        await ScanScreenResult(result);
     }
 
     public async Task ScanScreenResult(byte[]? bytes)
@@ -404,8 +510,8 @@ public class MainWindowViewModel : MyReactiveObject
 
     public async Task AddServerViaImageAsync()
     {
-        _updateView?.Invoke(EViewAction.ScanImageTask, null);
-        await Task.CompletedTask;
+        var imageFileName = await BrowseImageFileInteraction.HandleSafe(RxVoid.Default);
+        await ScanImageResult(imageFileName);
     }
 
     public async Task ScanImageResult(string fileName)
@@ -427,11 +533,11 @@ public class MainWindowViewModel : MyReactiveObject
         }
         else
         {
-            var ret = await ConfigHandler.AddBatchServers(_config, result, _config.SubIndexId, false);
+            var ret = await ConfigDbHandler.AddBatchServers(result, _config.SubIndexId, false);
             if (ret > 0)
             {
-                RefreshSubscriptions();
-                await RefreshServers();
+                await RefreshSubscriptions();
+                await RefreshServersDispatcherAsync();
                 NoticeManager.Instance.Enqueue(ResUI.SuccessfullyImportedServerViaScan);
             }
             else
@@ -447,15 +553,20 @@ public class MainWindowViewModel : MyReactiveObject
 
     private async Task SubSettingAsync()
     {
-        if (await _updateView?.Invoke(EViewAction.SubSettingWindow, null) == true)
+        var subSettingViewModel = new SubSettingViewModel();
+        if (await AppManager.Instance.WindowDialog.ShowDialogAsync(subSettingViewModel) == true)
         {
-            RefreshSubscriptions();
+            await RefreshSubscriptions();
         }
     }
 
     public async Task UpdateSubscriptionProcess(string subId, bool blProxy)
     {
-        await Task.Run(async () => await SubscriptionHandler.UpdateProcess(_config, subId, blProxy, UpdateTaskHandler));
+        await Task.Run(async () =>
+        {
+            var handler = new SubscriptionHandler(_config, blProxy, UpdateTaskHandler);
+            await handler.UpdateProcess(subId);
+        });
     }
 
     #endregion Subscription
@@ -464,28 +575,38 @@ public class MainWindowViewModel : MyReactiveObject
 
     private async Task OptionSettingAsync()
     {
-        var ret = await _updateView?.Invoke(EViewAction.OptionSettingWindow, null);
+        var settingViewModel = new OptionSettingViewModel();
+        var ret = await AppManager.Instance.WindowDialog.ShowDialogAsync(settingViewModel);
         if (ret == true)
         {
-            AppEvents.InboundDisplayRequested.Publish();
+            MainGirdOrientation = _config.UiItem.MainGirdOrientation;
+            RxSchedulers.MainThreadScheduler.Schedule(async () =>
+            {
+                await StatusBarViewModel.InboundDisplayStatus();
+            });
             await Reload();
         }
     }
 
     private async Task RoutingSettingAsync()
     {
-        var ret = await _updateView?.Invoke(EViewAction.RoutingSettingWindow, null);
+        var routingSettingViewModel = new RoutingSettingViewModel();
+        var ret = await AppManager.Instance.WindowDialog.ShowDialogAsync(routingSettingViewModel);
         if (ret == true)
         {
-            await ConfigHandler.InitBuiltinRouting(_config);
-            AppEvents.RoutingsMenuRefreshRequested.Publish();
+            await ConfigDbHandler.InitBuiltinRouting();
+            RxSchedulers.MainThreadScheduler.Schedule(async () =>
+            {
+                await StatusBarViewModel.RefreshRoutingsMenu();
+            });
             await Reload();
         }
     }
 
     private async Task DNSSettingAsync()
     {
-        var ret = await _updateView?.Invoke(EViewAction.DNSSettingWindow, null);
+        var dnsSettingViewModel = new DNSSettingViewModel();
+        var ret = await AppManager.Instance.WindowDialog.ShowDialogAsync(dnsSettingViewModel);
         if (ret == true)
         {
             await Reload();
@@ -494,7 +615,8 @@ public class MainWindowViewModel : MyReactiveObject
 
     private async Task FullConfigTemplateAsync()
     {
-        var ret = await _updateView?.Invoke(EViewAction.FullConfigTemplateWindow, null);
+        var fullConfigTemplateViewModel = new FullConfigTemplateViewModel();
+        var ret = await AppManager.Instance.WindowDialog.ShowDialogAsync(fullConfigTemplateViewModel);
         if (ret == true)
         {
             await Reload();
@@ -504,7 +626,7 @@ public class MainWindowViewModel : MyReactiveObject
     private async Task ClearServerStatistics()
     {
         await StatisticsManager.Instance.ClearAllServerStatistics();
-        await RefreshServers();
+        await RefreshServersDispatcherAsync();
     }
 
     private async Task OpenTheFileLocation()
@@ -541,11 +663,24 @@ public class MainWindowViewModel : MyReactiveObject
             return;
         }
 
+        if (DesignMode)
+        {
+            _reloadSemaphore.Release();
+            return;
+        }
+
         try
         {
             SetReloadEnabled(false);
 
-            var profileItem = await ConfigHandler.GetDefaultServer(_config);
+            RxSchedulers.MainThreadScheduler.Schedule(() =>
+            {
+                if (TabMainSelectedIndex < 0)
+                {
+                    TabMainSelectedIndex = 0;
+                }
+            });
+            var profileItem = await ConfigTextHandler.GetDefaultServer();
             if (profileItem == null)
             {
                 NoticeManager.Instance.Enqueue(ResUI.CheckServerSettings);
@@ -559,16 +694,39 @@ public class MainWindowViewModel : MyReactiveObject
 
             await Task.Run(async () =>
             {
-                await LoadCore(allResult.ResolvedMainContext, allResult.PreSocksResult?.Context);
+                await LoadCore(allResult.MainResult.Context, allResult.PreSocksResult?.Context);
                 await SysProxyHandler.UpdateSysProxy(_config, false);
                 await Task.Delay(1000);
             });
-            AppEvents.TestServerRequested.Publish();
+            RxSchedulers.MainThreadScheduler.Schedule(async () =>
+            {
+                var result = await StatusBarViewModel.TestServerAvailability();
+                if (result == null || profileItem.IndexId.IsNullOrEmpty())
+                {
+                    return;
+                }
+
+                await ProfilesViewModel.SetSpeedTestResult(new()
+                {
+                    IndexId = profileItem.IndexId,
+                    IpInfo = result.Ip,
+                    Delay = result.Time > 0 ? result.Time.ToString() : null
+                });
+            });
 
             var showClashUI = AppManager.Instance.IsRunningCore(ECoreType.sing_box);
             if (showClashUI)
             {
-                AppEvents.ProxiesReloadRequested.Publish();
+                //await Observable.Start(async () =>
+                //{
+                //    await ClashProxiesViewModel.ProxiesReload();
+                //}, RxSchedulers.MainThreadScheduler);
+                await Signal.FromAsync(async () =>
+                    {
+                        await ClashProxiesViewModel.ProxiesReload();
+                        return RxVoid.Default;
+                    }).SubscribeOn(RxSchedulers.MainThreadScheduler)
+                    .ToTask();
             }
 
             ReloadResult(showClashUI);
@@ -591,7 +749,10 @@ public class MainWindowViewModel : MyReactiveObject
         RxSchedulers.MainThreadScheduler.Schedule(() =>
         {
             ShowClashUI = showClashUI;
-            TabMainSelectedIndex = showClashUI ? TabMainSelectedIndex : 0;
+            if (!showClashUI || TabMainSelectedIndex < 0)
+            {
+                TabMainSelectedIndex = 0;
+            }
         });
     }
 
@@ -611,12 +772,16 @@ public class MainWindowViewModel : MyReactiveObject
 
     public async Task ApplyRegionalPreset(EPresetType type)
     {
-        await ConfigHandler.ApplyRegionalPreset(_config, type);
-        await ConfigHandler.InitRouting(_config);
-        AppEvents.RoutingsMenuRefreshRequested.Publish();
+        await ConfigDbHandler.ApplyRegionalPreset(type);
+        await ConfigDbHandler.InitRouting();
+        RxSchedulers.MainThreadScheduler.Schedule(async () =>
+        {
+            await StatusBarViewModel.RefreshRoutingsMenu();
+        });
 
-        await ConfigHandler.SaveConfig(_config);
-        await new UpdateService(_config, UpdateTaskHandler).UpdateGeoFileAll();
+        await ConfigTextHandler.SaveConfig();
+        using var downloadService = await DownloadService.CreateDownloadServiceWithCheck();
+        await new UpdateService(downloadService, _config, UpdateTaskHandler).UpdateGeoFileAll();
         await Reload();
     }
 

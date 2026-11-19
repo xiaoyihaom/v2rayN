@@ -65,7 +65,8 @@
                     materialDesign:HintAssist.Hint="{x:Static resx:ResUI.MsgServerTitle}"
                     materialDesign:TextFieldAssist.HasClearButton="True"
                     AutomationProperties.Name="{x:Static resx:ResUI.MsgServerTitle}"
-                    Style="{StaticResource DefTextBox}" />
+                    Style="{StaticResource DefTextBox}"
+                    ToolTip="{x:Static resx:ResUI.MsgServerTitle}" />
 
                 <Button
                     x:Name="btnAutofitColumnWidth"
@@ -159,6 +160,10 @@
                             Header="{x:Static resx:ResUI.menuRealPingServer}"
                             InputGestureText="Ctrl+R" />
                         <MenuItem
+                            x:Name="menuUdpTestServer"
+                            Height="{StaticResource MenuItemHeight}"
+                            Header="{x:Static resx:ResUI.menuUdpTestServer}" />
+                        <MenuItem
                             x:Name="menuSpeedServer"
                             Height="{StaticResource MenuItemHeight}"
                             Header="{x:Static resx:ResUI.menuSpeedServer}"
@@ -238,6 +243,10 @@
                                 x:Name="menuExport2ShareUrlBase64"
                                 Height="{StaticResource MenuItemHeight}"
                                 Header="{x:Static resx:ResUI.menuExport2ShareUrlBase64}" />
+                            <MenuItem
+                                x:Name="menuExport2InnerUri"
+                                Height="{StaticResource MenuItemHeight}"
+                                Header="{x:Static resx:ResUI.menuExport2InnerUri}" />
                         </MenuItem>
                         <Separator />
                         <MenuItem Header="{x:Static resx:ResUI.menuGenGroupServer}">
@@ -261,6 +270,7 @@
                     </Style>
 
                     <Style BasedOn="{StaticResource MaterialDesignDataGridCell}" TargetType="DataGridCell">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsActive}" Value="True">
                                 <Setter Property="Background" Value="{DynamicResource MaterialDesign.Brush.Primary.Light}" />
@@ -337,6 +347,14 @@
                         Binding="{Binding TodayUp}"
                         ExName="TodayUp"
                         Header="{x:Static resx:ResUI.LvTodayUploadDataAmount}" />
+
+                    <base:MyDGTextColumn
+                        x:Name="colIpInfo"
+                        Width="100"
+                        Binding="{Binding IpInfo}"
+                        ExName="IpInfo"
+                        Header="{x:Static resx:ResUI.LvTestIpInfo}" />
+
                     <base:MyDGTextColumn
                         x:Name="colTodayDown"
                         Width="100"

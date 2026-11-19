@@ -3,6 +3,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dd="clr-namespace:v2rayN.Desktop.DesignData"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:resx="clr-namespace:ServiceLib.Resx;assembly=ServiceLib"
     xmlns:views="clr-namespace:v2rayN.Desktop.Views"
@@ -11,6 +12,7 @@
     Width="900"
     Height="600"
     x:DataType="vms:FullConfigTemplateViewModel"
+    Design.DataContext="{x:Static dd:DesignData.FullConfigTemplate}"
     ShowInTaskbar="False"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -22,12 +24,12 @@
             Orientation="Horizontal">
             <Button
                 x:Name="btnSave"
-                Width="100"
+                MinWidth="100"
                 Content="{x:Static resx:ResUI.TbConfirm}"
                 IsDefault="True" />
             <Button
                 x:Name="btnCancel"
-                Width="100"
+                MinWidth="100"
                 Margin="{StaticResource MarginLr8}"
                 Content="{x:Static resx:ResUI.TbCancel}"
                 IsCancel="True" />
@@ -90,13 +92,26 @@
                         </StackPanel>
                     </WrapPanel>
 
-                    <HeaderedContentControl
-                        Margin="{StaticResource Margin4}"
-                        BorderBrush="Gray"
-                        BorderThickness="1"
-                        Header="xray config template json">
-                        <views:JsonEditor x:Name="rayFullConfigTemplate" VerticalAlignment="Stretch" />
-                    </HeaderedContentControl>
+                    <Grid Margin="{StaticResource Margin4}" ColumnDefinitions="*,10,*">
+
+                        <HeaderedContentControl
+                            Grid.Column="0"
+                            BorderBrush="Gray"
+                            BorderThickness="1"
+                            Header="xray config template json">
+                            <views:JsonEditor x:Name="rayFullConfigTemplate" VerticalAlignment="Stretch" />
+                        </HeaderedContentControl>
+
+                        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+
+                        <HeaderedContentControl
+                            Grid.Column="2"
+                            BorderBrush="Gray"
+                            BorderThickness="1"
+                            Header="xray tun config template json">
+                            <views:JsonEditor x:Name="rayFullTunConfigTemplate" VerticalAlignment="Stretch" />
+                        </HeaderedContentControl>
+                    </Grid>
                 </DockPanel>
             </TabItem>
             <TabItem HorizontalAlignment="Left" Header="{x:Static resx:ResUI.TbSBFullConfigTemplate}">

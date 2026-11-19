@@ -70,6 +70,7 @@
                                     x:Name="menuAddServerViaImage"
                                     Height="{StaticResource MenuItemHeight}"
                                     Header="{x:Static resx:ResUI.menuAddServerViaImage}" />
+                                <Separator Margin="-40,5" />
                                 <MenuItem
                                     x:Name="menuAddCustomServer"
                                     Height="{StaticResource MenuItemHeight}"
@@ -82,6 +83,10 @@
                                     x:Name="menuAddProxyChainServer"
                                     Height="{StaticResource MenuItemHeight}"
                                     Header="{x:Static resx:ResUI.menuAddProxyChainServer}" />
+                                <MenuItem
+                                    x:Name="menuAddCustomOutboundServer"
+                                    Height="{StaticResource MenuItemHeight}"
+                                    Header="{x:Static resx:ResUI.menuAddCustomOutboundServer}" />
                                 <Separator Margin="-40,5" />
                                 <MenuItem
                                     x:Name="menuAddVmessServer"
@@ -107,6 +112,10 @@
                                     x:Name="menuAddWireguardServer"
                                     Height="{StaticResource MenuItemHeight}"
                                     Header="{x:Static resx:ResUI.menuAddWireguardServer}" />
+                                <MenuItem
+                                    x:Name="menuAddMasqueServer"
+                                    Height="{StaticResource MenuItemHeight}"
+                                    Header="{x:Static resx:ResUI.menuAddMasqueServer}" />
                                 <MenuItem
                                     x:Name="menuAddSocksServer"
                                     Height="{StaticResource MenuItemHeight}"
@@ -313,10 +322,17 @@
                             Style="{StaticResource MaterialDesignToolForegroundPopupBox}">
                             <ContentControl x:Name="pbTheme" />
                         </materialDesign:PopupBox>
+
+                        <Button
+                            x:Name="btnNewUpdate"
+                            Margin="{StaticResource MarginLeftRight8}"
+                            Content="{x:Static resx:ResUI.menuNewUpdate}"
+                            Style="{StaticResource DefButton}"
+                            Visibility="Hidden" />
                     </ToolBar>
                 </ToolBarTray>
 
-                <view:StatusBarView DockPanel.Dock="Bottom" />
+                <ContentControl x:Name="contentStatusBarView" DockPanel.Dock="Bottom" />
 
                 <Grid>
                     <Grid x:Name="gridMain" Visibility="Collapsed">

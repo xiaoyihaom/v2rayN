@@ -1,15 +1,16 @@
 namespace ServiceLib.ViewModels;
 
-public class GlobalHotkeySettingViewModel : MyReactiveObject
+public class GlobalHotkeySettingViewModel : MyReactiveObject, ICloseable
 {
+    public event EventHandler? RequestClose;
+
     private readonly List<KeyEventItem> _globalHotkeys;
 
-    public ReactiveCommand<Unit, Unit> SaveCmd { get; }
+    public ReactiveCommand<RxVoid, RxVoid> SaveCmd { get; }
 
-    public GlobalHotkeySettingViewModel(Func<EViewAction, object?, Task<bool>>? updateView)
+    public GlobalHotkeySettingViewModel()
     {
-        _config = AppManager.Instance.Config;
-        _updateView = updateView;
+        _config = ConfigTextHandler.Config;
 
         _globalHotkeys = JsonUtils.DeepCopy(_config.GlobalHotkeys);
 
@@ -49,9 +50,9 @@ public class GlobalHotkeySettingViewModel : MyReactiveObject
     {
         _config.GlobalHotkeys = _globalHotkeys;
 
-        if (await ConfigHandler.SaveConfig(_config) == 0)
+        if (await ConfigTextHandler.SaveConfig() == 0)
         {
-            _updateView?.Invoke(EViewAction.CloseWindow, null);
+            RequestClose?.Invoke(this, EventArgs.Empty);
         }
         else
         {

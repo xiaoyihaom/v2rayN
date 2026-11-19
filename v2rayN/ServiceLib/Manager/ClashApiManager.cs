@@ -1,160 +1,222 @@
-using static ServiceLib.Models.ClashProxies;
+using System.Net.Http.Headers;
 
 namespace ServiceLib.Manager;
 
 public sealed class ClashApiManager
 {
+    private const string _tag = "ClashApiManager";
     private static readonly Lazy<ClashApiManager> instance = new(() => new());
     public static ClashApiManager Instance => instance.Value;
 
-    private static readonly string _tag = "ClashApiHandler";
-    private Dictionary<string, ProxiesItem>? _proxies;
-    public Dictionary<string, object> ProfileContent { get; set; }
+    private static string ApiUrl => $"{Global.HttpProtocol}{Global.Loopback}:{AppManager.Instance.StatePort2}";
 
-    public async Task<Tuple<ClashProxies, ClashProviders>?> GetClashProxiesAsync()
+    public async Task<ClashItem?> GetProxies()
     {
+        using var httpClient = HttpClientHelper.Instance.GetHttpClient(false);
         for (var i = 0; i < 3; i++)
         {
-            var url = $"{GetApiUrl()}/proxies";
-            var result = await HttpClientHelper.Instance.TryGetAsync(url);
-            var clashProxies = JsonUtils.Deserialize<ClashProxies>(result);
-
-            var url2 = $"{GetApiUrl()}/providers/proxies";
-            var result2 = await HttpClientHelper.Instance.TryGetAsync(url2);
-            var clashProviders = JsonUtils.Deserialize<ClashProviders>(result2);
-
-            if (clashProxies != null || clashProviders != null)
+            ClashProxies? clashProxies = null;
+            ClashProviders? clashProviders = null;
+            try
             {
-                _proxies = clashProxies?.proxies;
-                return new Tuple<ClashProxies, ClashProviders>(clashProxies, clashProviders);
+                var url = $"{ApiUrl}/proxies";
+                var resultTask = httpClient.GetStringAsync(url);
+
+                var url2 = $"{ApiUrl}/providers/proxies";
+                var result2Task = httpClient.GetStringAsync(url2);
+
+                await Task.WhenAll(resultTask, result2Task);
+
+                var result = await resultTask;
+                var result2 = await result2Task;
+                clashProxies = JsonUtils.Deserialize<ClashProxies>(result);
+                clashProviders = JsonUtils.Deserialize<ClashProviders>(result2);
+            }
+            catch (Exception ex)
+            {
+                Logging.SaveLog(_tag, ex);
             }
 
-            await Task.Delay(2000);
+            if (clashProxies is null && clashProviders is null)
+            {
+                await Task.Delay(2000);
+                continue;
+            }
+
+            var item = new ClashItem();
+            if (clashProxies?.proxies is { Count: > 0 } proxies)
+            {
+                item = item with { Proxies = proxies };
+            }
+            if (clashProviders?.providers is { Count: > 0 } providers)
+            {
+                foreach (var provider in providers)
+                {
+                    foreach (var proxy in provider.Value.proxies ?? [])
+                    {
+                        if (string.IsNullOrEmpty(proxy.name)
+                            || !item.Proxies.TryAdd(proxy.name, proxy))
+                        {
+                            continue;
+                        }
+                        item.ProviderIndexMap.Add(proxy.name, provider.Key);
+                    }
+                }
+            }
+
+            return item;
         }
 
         return null;
     }
 
-    public void ClashProxiesDelayTest(bool blAll, List<ClashProxyModel> lstProxy, Func<ClashProxyModel?, string, Task> updateFunc)
+    public async Task<int> TestDelay(string name, ClashItem? clashItem)
     {
-        Task.Run(async () =>
+        if (clashItem?.ProviderIndexMap.TryGetValue(name, out var providerName) == true)
         {
-            if (blAll)
-            {
-                if (_proxies == null)
-                {
-                    await GetClashProxiesAsync();
-                }
-                lstProxy = new List<ClashProxyModel>();
-                foreach (var kv in _proxies ?? [])
-                {
-                    if (Global.notAllowTestType.Contains(kv.Value.type?.ToLower()))
-                    {
-                        continue;
-                    }
-                    lstProxy.Add(new ClashProxyModel()
-                    {
-                        Name = kv.Value.name,
-                        Type = kv.Value.type?.ToLower(),
-                    });
-                }
-            }
-
-            if (lstProxy is not { Count: > 0 })
-            {
-                return;
-            }
-            var urlBase = $"{GetApiUrl()}/proxies";
-            urlBase += @"/{0}/delay?timeout=10000&url=" + AppManager.Instance.Config.SpeedTestItem.SpeedPingTestUrl;
-
-            var tasks = new List<Task>();
-            foreach (var it in lstProxy)
-            {
-                if (Global.notAllowTestType.Contains(it.Type.ToLower()))
-                {
-                    continue;
-                }
-                var name = it.Name;
-                var url = string.Format(urlBase, name);
-                tasks.Add(Task.Run(async () =>
-                {
-                    var result = await HttpClientHelper.Instance.TryGetAsync(url);
-                    await updateFunc?.Invoke(it, result);
-                }));
-            }
-            await Task.WhenAll(tasks);
-            await Task.Delay(1000);
-            await updateFunc?.Invoke(null, "");
-        });
+            return await TestProviderProxyDelay(name, providerName);
+        }
+        return await TestProxyDelay(name);
     }
 
-    public List<ProxiesItem>? GetClashProxyGroups()
+    private async Task<int> TestProxyDelay(string name)
+    {
+        var url = $"{ApiUrl}/proxies/{Utils.UrlEncode(name)}/delay?timeout=10000&url=" +
+                  Utils.UrlEncode(ConfigTextHandler.Config.SpeedTestItem.SpeedPingTestUrl);
+        return await SendTestRequest(url);
+    }
+
+    private async Task<int> TestProviderProxyDelay(string name, string providerName)
+    {
+        var url =
+            $"{ApiUrl}/providers/proxies/{Utils.UrlEncode(providerName)}/{Utils.UrlEncode(name)}/healthcheck?timeout=10000&url=" +
+            Utils.UrlEncode(ConfigTextHandler.Config.SpeedTestItem.SpeedPingTestUrl);
+        return await SendTestRequest(url);
+    }
+
+    private async Task<int> SendTestRequest(string url)
     {
         try
         {
-            var fileContent = ProfileContent;
-            if (fileContent is null || fileContent?.ContainsKey("proxy-groups") == false)
-            {
-                return null;
-            }
-            return JsonUtils.Deserialize<List<ProxiesItem>>(JsonUtils.Serialize(fileContent["proxy-groups"]));
+            using var httpClient = HttpClientHelper.Instance.GetHttpClient(false);
+            var result = await httpClient.GetStringAsync(url);
+            var jsonObject = JsonUtils.ParseJson(result) as JsonObject;
+            return jsonObject?["delay"] is { } n && n.GetValueKind() == JsonValueKind.Number &&
+                   n.GetValue<JsonElement>().TryGetInt32(out var v)
+                ? v
+                : -1;
         }
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
+        }
+        return -1;
+    }
+
+    public async Task SetActiveProxy(string groupName, string nodeName)
+    {
+        try
+        {
+            using var httpClient = HttpClientHelper.Instance.GetHttpClient(false);
+            var url = $"{ApiUrl}/proxies/{Utils.UrlEncode(groupName)}";
+            var jsonObject = new JsonObject
+            {
+                ["name"] = nodeName,
+            };
+            var jsonString = JsonUtils.Serialize(jsonObject);
+            var content = new StringContent(jsonString, Encoding.UTF8, "application/json");
+            await httpClient.PutAsync(url, content);
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog(_tag, ex);
+        }
+    }
+
+    public async Task UpdateClashMode(string mode)
+    {
+        var jsonObject = new JsonObject
+        {
+            ["mode"] = mode,
+        };
+        await UpdateConfig(jsonObject);
+    }
+
+    public async Task UpdateConfig(JsonObject jsonObject)
+    {
+        try
+        {
+            var urlBase = $"{ApiUrl}/configs";
+
+            using var httpClient = HttpClientHelper.Instance.GetHttpClient(false);
+            var jsonString = JsonUtils.Serialize(jsonObject);
+            var buffer = Encoding.UTF8.GetBytes(jsonString);
+            var byteContent = new ByteArrayContent(buffer);
+            byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            await httpClient.PatchAsync(urlBase, byteContent);
+        }
+        catch (Exception ex)
+        {
+            Logging.SaveLog(_tag, ex);
+        }
+    }
+
+    public async Task<List<string>> GetClashModes()
+    {
+        var jsonNode = await GetConfig();
+        if ((jsonNode?["mode-list"] ?? jsonNode?["modes"]) is not JsonArray { Count: > 0 } modesArray)
+        {
+            return [];
+        }
+        var modes = new List<string>();
+        foreach (var mode in modesArray)
+        {
+            if (mode is JsonValue jsonValue && jsonValue.GetValueKind() == JsonValueKind.String)
+            {
+                modes.Add(jsonValue.GetValue<string>());
+            }
+        }
+        return modes;
+    }
+
+    public async Task<string?> GetClashMode()
+    {
+        var jsonNode = await GetConfig();
+        if (jsonNode["mode"] is not JsonValue jsonValue || jsonValue.GetValueKind() != JsonValueKind.String)
+        {
             return null;
         }
+        return jsonValue.GetValue<string>();
     }
 
-    public async Task ClashSetActiveProxy(string name, string nameNode)
+    public async Task<JsonObject> GetConfig()
     {
         try
         {
-            var url = $"{GetApiUrl()}/proxies/{name}";
-            var headers = new Dictionary<string, string>();
-            headers.Add("name", nameNode);
-            await HttpClientHelper.Instance.PutAsync(url, headers);
+            var url = $"{ApiUrl}/configs";
+            using var httpClient = HttpClientHelper.Instance.GetHttpClient(false);
+            var result = await httpClient.GetStringAsync(url);
+            var jsonNode = JsonUtils.ParseJson(result);
+            if (jsonNode is not JsonObject jsonObject)
+            {
+                return new JsonObject();
+            }
+            return jsonObject;
         }
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
         }
+        return new JsonObject();
     }
 
-    public async Task ClashConfigUpdate(Dictionary<string, string> headers)
-    {
-        if (_proxies == null)
-        {
-            return;
-        }
-
-        var urlBase = $"{GetApiUrl()}/configs";
-
-        await HttpClientHelper.Instance.PatchAsync(urlBase, headers);
-    }
-
-    public async Task ClashConfigReload(string filePath)
-    {
-        await ClashConnectionClose("");
-        try
-        {
-            var url = $"{GetApiUrl()}/configs?force=true";
-            var headers = new Dictionary<string, string>();
-            headers.Add("path", filePath);
-            await HttpClientHelper.Instance.PutAsync(url, headers);
-        }
-        catch (Exception ex)
-        {
-            Logging.SaveLog(_tag, ex);
-        }
-    }
-
-    public async Task<ClashConnections?> GetClashConnectionsAsync()
+    public async Task<ClashConnections?> GetConnections()
     {
         try
         {
-            var url = $"{GetApiUrl()}/connections";
-            var result = await HttpClientHelper.Instance.TryGetAsync(url);
+            var url = $"{ApiUrl}/connections";
+            using var httpClient = HttpClientHelper.Instance.GetHttpClient(false);
+            var result = await httpClient.GetStringAsync(url);
             var clashConnections = JsonUtils.Deserialize<ClashConnections>(result);
 
             return clashConnections;
@@ -167,21 +229,17 @@ public sealed class ClashApiManager
         return null;
     }
 
-    public async Task ClashConnectionClose(string id)
+    public async Task CloseConnection(string id)
     {
         try
         {
-            var url = $"{GetApiUrl()}/connections/{id}";
-            await HttpClientHelper.Instance.DeleteAsync(url);
+            var url = $"{ApiUrl}/connections/{id}";
+            using var httpClient = HttpClientHelper.Instance.GetHttpClient(false);
+            await httpClient.DeleteAsync(url);
         }
         catch (Exception ex)
         {
             Logging.SaveLog(_tag, ex);
         }
-    }
-
-    private string GetApiUrl()
-    {
-        return $"{Global.HttpProtocol}{Global.Loopback}:{AppManager.Instance.StatePort2}";
     }
 }

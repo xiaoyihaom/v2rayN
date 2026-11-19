@@ -2,49 +2,61 @@ namespace v2rayN.Views;
 
 public partial class AddServer2Window
 {
-    public AddServer2Window(ProfileItem profileItem)
+    public AddServer2Window()
     {
         InitializeComponent();
 
-        Owner = Application.Current.MainWindow;
         Loaded += Window_Loaded;
-        ViewModel = new AddServer2ViewModel(profileItem, UpdateViewHandler);
 
-        cmbCoreType.ItemsSource = Utils.GetEnumNames<ECoreType>().Where(t => t != ECoreType.v2rayN.ToString()).ToList().AppendEmpty();
+        cmbCoreType.ItemsSource = Utils.GetEnumNames<ECoreType>().Where(t => t != nameof(ECoreType.v2rayN)).ToList().AppendEmpty();
 
         this.WhenActivated(disposables =>
         {
+            this.WhenAnyValue(v => v.ViewModel.SelectedSource)
+                .KeepNotNull()
+                .Subscribe(InitializeData)
+                .DisposeWith(disposables);
+
             this.Bind(ViewModel, vm => vm.SelectedSource.Remarks, v => v.txtRemarks.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.Address, v => v.txtAddress.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.CoreType, v => v.cmbCoreType.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.DisplayLog, v => v.togDisplayLog.IsChecked).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSource.PreSocksPort, v => v.txtPreSocksPort.Text).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.IsSingboxEndpoint, v => v.togSingBoxEndpoint.IsChecked).DisposeWith(disposables);
 
             this.BindCommand(ViewModel, vm => vm.BrowseServerCmd, v => v.btnBrowse).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.EditServerCmd, v => v.btnEdit).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.SaveServerCmd, v => v.btnSave).DisposeWith(disposables);
-        });
-        WindowsUtils.SetDarkBorder(this, AppManager.Instance.Config.UiItem.CurrentTheme);
-    }
 
-    private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
-    {
-        switch (action)
-        {
-            case EViewAction.CloseWindow:
-                DialogResult = true;
-                break;
-
-            case EViewAction.BrowseServer:
+            ViewModel.BrowseConfigFileInteraction.RegisterHandler(interaction =>
+            {
                 if (UI.OpenFileDialog(out var fileName, "Config|*.json|YAML|*.yaml;*.yml|All|*.*") != true)
                 {
-                    return false;
+                    interaction.SetOutput(null);
+                    return;
                 }
-                ViewModel?.BrowseServer(fileName);
-                break;
-        }
+                interaction.SetOutput(fileName);
+            }).DisposeWith(disposables);
+        });
+        WindowsUtils.SetDarkBorder(this, ConfigTextHandler.Config.UiItem.CurrentTheme);
+    }
 
-        return await Task.FromResult(true);
+    private void InitializeData(ProfileItem profileItem)
+    {
+        if (profileItem.ConfigType is EConfigType.Custom)
+        {
+            Title = ResUI.menuAddCustomServer;
+            cmbCoreType.ItemsSource = Utils.GetEnumNames<ECoreType>().Where(t => t != nameof(ECoreType.v2rayN)).ToList();
+            gridCustomServer.Visibility = Visibility.Visible;
+            gridCustomOutbound.Visibility = Visibility.Collapsed;
+        }
+        else if (profileItem.ConfigType is EConfigType.Outbound)
+        {
+            Title = ResUI.menuAddCustomOutboundServer;
+            cmbCoreType.ItemsSource = Global.CoreTypes;
+            gridCustomServer.Visibility = Visibility.Collapsed;
+            gridCustomOutbound.Visibility = Visibility.Visible;
+        }
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)

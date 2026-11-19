@@ -8,16 +8,16 @@ public partial class DNSSettingWindow
     {
         InitializeComponent();
 
-        Owner = Application.Current.MainWindow;
-        _config = AppManager.Instance.Config;
-
-        ViewModel = new DNSSettingViewModel(UpdateViewHandler);
+        _config = ConfigTextHandler.Config;
 
         cmbDirectDNSStrategy.ItemsSource = Global.DomainStrategy;
         cmbRemoteDNSStrategy.ItemsSource = Global.DomainStrategy;
+        cmbProxyDialDNSStrategy.ItemsSource = Global.DomainStrategy;
         cmbDirectDNS.ItemsSource = Global.DomainDirectDNSAddress;
         cmbRemoteDNS.ItemsSource = Global.DomainRemoteDNSAddress;
         cmbBootstrapDNS.ItemsSource = Global.DomainPureIPDNSAddress;
+        cmbFakeIPRange.ItemsSource = Global.FakeIPRanges;
+        cmbFakeIPv6Range.ItemsSource = Global.FakeIPv6Ranges;
         cmbDirectExpectedIPs.ItemsSource = Global.ExpectedIPs;
 
         cmbdomainStrategy4FreedomCompatible.ItemsSource = Global.DomainStrategy;
@@ -30,16 +30,23 @@ public partial class DNSSettingWindow
             this.Bind(ViewModel, vm => vm.UseSystemHosts, v => v.togUseSystemHosts.IsChecked).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.AddCommonHosts, v => v.togAddCommonHosts.IsChecked).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.FakeIP, v => v.togFakeIP.IsChecked).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.FakeIPRange, v => v.cmbFakeIPRange.Text).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.FakeIPv6, v => v.togFakeIPv6.IsChecked).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.FakeIPv6Range, v => v.cmbFakeIPv6Range.Text).DisposeWith(disposables);
+            this.OneWayBind(ViewModel, vm => vm.IsFakeIPv6Available, v => v.gridFakeIPv6.IsEnabled).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.BlockBindingQuery, v => v.togBlockBindingQuery.IsChecked).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.BlockAAAAQuery, v => v.togBlockAAAAQuery.IsChecked).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.DirectDNS, v => v.cmbDirectDNS.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.RemoteDNS, v => v.cmbRemoteDNS.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.BootstrapDNS, v => v.cmbBootstrapDNS.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.Strategy4Freedom, v => v.cmbDirectDNSStrategy.SelectedItem).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.Strategy4Proxy, v => v.cmbRemoteDNSStrategy.SelectedItem).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.Strategy4ProxyDial, v => v.cmbProxyDialDNSStrategy.SelectedItem).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.Hosts, v => v.txtHosts.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.DirectExpectedIPs, v => v.cmbDirectExpectedIPs.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.ParallelQuery, v => v.togParallelQuery.IsChecked).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.ServeStale, v => v.togServeStale.IsChecked).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.EnableHappyEyeballs, v => v.togEnableHappyEyeballs.IsChecked).DisposeWith(disposables);
 
             this.BindCommand(ViewModel, vm => vm.SaveCmd, v => v.btnSave).DisposeWith(disposables);
 
@@ -50,6 +57,7 @@ public partial class DNSSettingWindow
             this.Bind(ViewModel, vm => vm.DomainStrategy4FreedomCompatible, v => v.cmbdomainStrategy4FreedomCompatible.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.DomainDNSAddressCompatible, v => v.cmbdomainDNSAddressCompatible.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.NormalDNSCompatible, v => v.txtnormalDNSCompatible.Text).DisposeWith(disposables);
+            this.Bind(ViewModel, vm => vm.TunDNSCompatible, v => v.txttunDNSCompatible.Text).DisposeWith(disposables);
 
             this.Bind(ViewModel, vm => vm.DomainStrategy4Freedom2Compatible, v => v.cmbdomainStrategy4OutCompatible.Text).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.DomainDNSAddress2Compatible, v => v.cmbdomainDNSAddress2Compatible.Text).DisposeWith(disposables);
@@ -59,29 +67,12 @@ public partial class DNSSettingWindow
             this.BindCommand(ViewModel, vm => vm.ImportDefConfig4V2rayCompatibleCmd, v => v.btnImportDefConfig4V2rayCompatible).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.ImportDefConfig4SingboxCompatibleCmd, v => v.btnImportDefConfig4SingboxCompatible).DisposeWith(disposables);
 
-            this.WhenAnyValue(x => x.ViewModel.IsSimpleDNSEnabled)
-                .Select(b => b ? Visibility.Collapsed : Visibility.Visible)
-                .BindTo(this, x => x.txtBasicDNSSettingsInvalid.Visibility)
-                .DisposeWith(disposables);
-            this.WhenAnyValue(x => x.ViewModel.IsSimpleDNSEnabled)
-                .Select(b => b ? Visibility.Collapsed : Visibility.Visible)
-                .BindTo(this, x => x.txtAdvancedDNSSettingsInvalid.Visibility)
-                .DisposeWith(disposables);
-            this.Bind(ViewModel, vm => vm.IsSimpleDNSEnabled, v => v.gridBasicDNSSettings.IsEnabled).DisposeWith(disposables);
-            this.Bind(ViewModel, vm => vm.IsSimpleDNSEnabled, v => v.gridAdvancedDNSSettings.IsEnabled).DisposeWith(disposables);
+            this.OneWayBind(ViewModel, vm => vm.IsSimpleDNSEnabled, v => v.txtBasicDNSSettingsInvalid.Visibility, isSimpleDnsEnabled => isSimpleDnsEnabled ? Visibility.Collapsed : Visibility.Visible).DisposeWith(disposables);
+            this.OneWayBind(ViewModel, vm => vm.IsSimpleDNSEnabled, v => v.txtAdvancedDNSSettingsInvalid.Visibility, isSimpleDnsEnabled => isSimpleDnsEnabled ? Visibility.Collapsed : Visibility.Visible).DisposeWith(disposables);
+            this.OneWayBind(ViewModel, vm => vm.IsSimpleDNSEnabled, v => v.gridBasicDNSSettings.IsEnabled).DisposeWith(disposables);
+            this.OneWayBind(ViewModel, vm => vm.IsSimpleDNSEnabled, v => v.gridAdvancedDNSSettings.IsEnabled).DisposeWith(disposables);
         });
-        WindowsUtils.SetDarkBorder(this, AppManager.Instance.Config.UiItem.CurrentTheme);
-    }
-
-    private async Task<bool> UpdateViewHandler(EViewAction action, object? obj)
-    {
-        switch (action)
-        {
-            case EViewAction.CloseWindow:
-                DialogResult = true;
-                break;
-        }
-        return await Task.FromResult(true);
+        WindowsUtils.SetDarkBorder(this, ConfigTextHandler.Config.UiItem.CurrentTheme);
     }
 
     private void linkDnsObjectDoc_Click(object sender, RoutedEventArgs e)

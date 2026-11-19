@@ -3,6 +3,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:dd="clr-namespace:v2rayN.Desktop.DesignData"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:resx="clr-namespace:ServiceLib.Resx;assembly=ServiceLib"
     xmlns:views="clr-namespace:v2rayN.Desktop.Views"
@@ -11,6 +12,7 @@
     Width="900"
     Height="600"
     x:DataType="vms:AddServerViewModel"
+    Design.DataContext="{x:Static dd:DesignData.AddServer}"
     ShowInTaskbar="False"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
@@ -22,12 +24,12 @@
             Orientation="Horizontal">
             <Button
                 x:Name="btnSave"
-                Width="100"
+                MinWidth="100"
                 Content="{x:Static resx:ResUI.TbConfirm}"
                 IsDefault="True" />
             <Button
                 x:Name="btnCancel"
-                Width="100"
+                MinWidth="100"
                 Margin="{StaticResource MarginLr8}"
                 Content="{x:Static resx:ResUI.TbCancel}"
                 IsCancel="True" />
@@ -256,6 +258,27 @@
                         Grid.Column="1"
                         Width="400"
                         Margin="{StaticResource Margin4}" />
+
+                    <TextBlock
+                        x:Name="tbHttpHeaders"
+                        Grid.Row="3"
+                        Grid.Column="0"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        IsVisible="False"
+                        Text="{x:Static resx:ResUI.TbHttpOutboundHeaders}"
+                        ToolTip.Tip="{x:Static resx:ResUI.TipHttpOutboundHeaders}" />
+                    <views:JsonEditor
+                        x:Name="txtHttpHeadersJson"
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        Width="400"
+                        MinHeight="100"
+                        Margin="{StaticResource Margin4}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center"
+                        IsVisible="False"
+                        ToolTip.Tip="{x:Static resx:ResUI.TipHttpOutboundHeaders}" />
                 </Grid>
                 <Grid
                     x:Name="gridVLESS"
@@ -306,7 +329,7 @@
                         x:Name="txtSecurity5"
                         Grid.Row="3"
                         Grid.Column="1"
-                        Width="200"
+                        Width="400"
                         Margin="{StaticResource Margin4}"
                         HorizontalAlignment="Left" />
 
@@ -374,7 +397,7 @@
                     Grid.Row="2"
                     ColumnDefinitions="300,Auto,Auto"
                     IsVisible="False"
-                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto">
 
                     <TextBlock
                         Grid.Row="1"
@@ -388,73 +411,122 @@
                         Grid.Column="1"
                         Width="400"
                         Margin="{StaticResource Margin4}" />
-
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="0"
-                        Margin="{StaticResource Margin4}"
+                    <Button
+                        Grid.Row="1"
+                        Grid.Column="2"
+                        Margin="{StaticResource MarginLr4}"
+                        HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbPath7}" />
-                    <TextBox
-                        x:Name="txtPath7"
-                        Grid.Row="2"
-                        Grid.Column="1"
-                        Width="400"
-                        Margin="{StaticResource Margin4}" />
+                        Classes="IconButton">
+                        <Button.Content>
+                            <PathIcon Data="{StaticResource SemiIconMore}">
+                                <PathIcon.RenderTransform>
+                                    <RotateTransform Angle="90" />
+                                </PathIcon.RenderTransform>
+                            </PathIcon>
+                        </Button.Content>
+                        <Button.Flyout>
+                            <Flyout>
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="{StaticResource Margin4}"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Static resx:ResUI.TbPath7}" />
+                                    <TextBox
+                                        x:Name="txtPath7"
+                                        Width="400"
+                                        Margin="{StaticResource Margin4}" />
+                                    <TextBlock
+                                        Margin="{StaticResource Margin4}"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Static resx:ResUI.TbGeckoPacketSize}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox
+                                            x:Name="txtMinGeckoPacketSize"
+                                            Width="90"
+                                            Margin="{StaticResource Margin4}"
+                                            PlaceholderText="Min" />
+                                        <TextBox
+                                            x:Name="txtMaxGeckoPacketSize"
+                                            Width="90"
+                                            Margin="{StaticResource Margin4}"
+                                            PlaceholderText="Max" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Margin="{StaticResource Margin4}"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Static resx:ResUI.TbHy2RealmUrl}" />
+                                    <TextBox
+                                        x:Name="txtHy2RealmUrl"
+                                        Width="400"
+                                        Margin="{StaticResource Margin4}" />
+                                    <TextBlock
+                                        Width="400"
+                                        Margin="{StaticResource Margin4}"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Static resx:ResUI.TbHy2RealmUrlTip}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
 
                     <TextBlock
-                        Grid.Row="3"
+                        Grid.Row="2"
                         Grid.Column="0"
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
                         Text="{x:Static resx:ResUI.TbPorts7}" />
                     <TextBox
                         x:Name="txtPorts7"
-                        Grid.Row="3"
+                        Grid.Row="2"
                         Grid.Column="1"
                         Width="400"
                         Margin="{StaticResource Margin4}"
-                        Watermark="1000-2000,3000,4000" />
+                        PlaceholderText="1000-2000,3000,4000" />
                     <TextBlock
-                        Grid.Row="3"
+                        Grid.Row="2"
                         Grid.Column="2"
+                        Width="200"
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbPorts7Tips}" />
+                        Text="{x:Static resx:ResUI.TbPorts7Tips}"
+                        TextWrapping="Wrap" />
 
                     <TextBlock
-                        Grid.Row="4"
+                        Grid.Row="3"
                         Grid.Column="0"
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
                         Text="{x:Static resx:ResUI.TbHopInt7}" />
                     <TextBox
                         x:Name="txtHopInt7"
-                        Grid.Row="4"
+                        Grid.Row="3"
                         Grid.Column="1"
-                        Width="400"
-                        Margin="{StaticResource Margin4}" />
+                        Width="200"
+                        Margin="{StaticResource Margin4}"
+                        HorizontalAlignment="Left" />
 
                     <TextBlock
-                        Grid.Row="5"
+                        Grid.Row="4"
                         Grid.Column="0"
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
                         Text="{x:Static resx:ResUI.TbSettingsHysteriaBandwidth}" />
                     <StackPanel
-                        Grid.Row="5"
+                        Grid.Row="4"
                         Grid.Column="1"
                         Orientation="Horizontal">
                         <TextBox
                             x:Name="txtUpMbps7"
                             Width="90"
                             Margin="{StaticResource Margin4}"
-                            Watermark="Up" />
+                            PlaceholderText="Up" />
                         <TextBox
                             x:Name="txtDownMbps7"
                             Width="90"
                             Margin="{StaticResource Margin4}"
-                            Watermark="Down" />
+                            PlaceholderText="Down" />
                     </StackPanel>
                 </Grid>
                 <Grid
@@ -508,7 +580,7 @@
                     Grid.Row="2"
                     ColumnDefinitions="300,Auto"
                     IsVisible="False"
-                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
 
                     <TextBlock
                         Grid.Row="1"
@@ -542,43 +614,72 @@
                         Grid.Column="0"
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbReserved}" />
+                        Text="{x:Static resx:ResUI.TbPreSharedKey}" />
                     <TextBox
-                        x:Name="txtPath9"
+                        x:Name="txtPreSharedKey9"
                         Grid.Row="3"
                         Grid.Column="1"
                         Width="400"
                         Margin="{StaticResource Margin4}"
-                        Watermark="2,3,4" />
+                        HorizontalAlignment="Left" />
 
                     <TextBlock
                         Grid.Row="4"
+                        Grid.Column="0"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Text="{x:Static resx:ResUI.TbReserved}" />
+                    <TextBox
+                        x:Name="txtPath9"
+                        Grid.Row="4"
+                        Grid.Column="1"
+                        Width="400"
+                        Margin="{StaticResource Margin4}"
+                        PlaceholderText="0, 0, 0" />
+
+                    <TextBlock
+                        Grid.Row="5"
                         Grid.Column="0"
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
                         Text="{x:Static resx:ResUI.TbLocalAddress}" />
                     <TextBox
                         x:Name="txtRequestHost9"
-                        Grid.Row="4"
+                        Grid.Row="5"
                         Grid.Column="1"
                         Width="400"
                         Margin="{StaticResource Margin4}"
-                        Watermark="Ipv4,Ipv6" />
+                        PlaceholderText="Ipv4, Ipv6" />
 
                     <TextBlock
-                        Grid.Row="5"
+                        Grid.Row="6"
                         Grid.Column="0"
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbSettingsTunMtu}" />
+                        Text="{x:Static resx:ResUI.TbMtu}" />
                     <TextBox
                         x:Name="txtShortId9"
-                        Grid.Row="5"
+                        Grid.Row="6"
                         Grid.Column="1"
                         Width="200"
                         Margin="{StaticResource Margin4}"
                         HorizontalAlignment="Left"
-                        Watermark="1500" />
+                        PlaceholderText="1280" />
+
+                    <TextBlock
+                        Grid.Row="7"
+                        Grid.Column="0"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Text="{x:Static resx:ResUI.TbDNS}" />
+                    <TextBox
+                        x:Name="txtDns"
+                        Grid.Row="7"
+                        Grid.Column="1"
+                        Width="400"
+                        Margin="{StaticResource Margin4}"
+                        HorizontalAlignment="Left"
+                        PlaceholderText="1.1.1.1, 2606:4700:4700::1111" />
                 </Grid>
                 <Grid
                     x:Name="gridAnytls"
@@ -682,6 +783,128 @@
                         HorizontalAlignment="Left" />
                 </Grid>
 
+
+                <Grid
+                    x:Name="gridMasque"
+                    Grid.Row="2"
+                    ColumnDefinitions="300,Auto"
+                    IsVisible="False"
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                    <TextBlock
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Text="{x:Static resx:ResUI.TbUsername}" />
+                    <TextBox
+                        x:Name="txtId14"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Width="400"
+                        Margin="{StaticResource Margin4}" />
+
+                    <TextBlock
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Text="{x:Static resx:ResUI.TbId3}" />
+                    <TextBox
+                        x:Name="txtSecurity14"
+                        Grid.Row="2"
+                        Grid.Column="1"
+                        Width="400"
+                        Margin="{StaticResource Margin4}" />
+
+                    <TextBlock
+                        Grid.Row="3"
+                        Grid.Column="0"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Text="{x:Static resx:ResUI.TbPath}" />
+                    <TextBox
+                        x:Name="txtPath14"
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        Width="400"
+                        Margin="{StaticResource Margin4}" />
+
+                    <TextBlock
+                        Grid.Row="4"
+                        Grid.Column="0"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Text="{x:Static resx:ResUI.TbHttpOutboundHeaders}" />
+                    <TextBox
+                        x:Name="txtHttpHeaders14"
+                        Grid.Row="4"
+                        Grid.Column="1"
+                        Width="400"
+                        Margin="{StaticResource Margin4}"
+                        AcceptsReturn="True"
+                        Classes="TextArea"
+                        PlaceholderText="Header: Value"
+                        TextWrapping="NoWrap" />
+
+                    <TextBlock
+                        Grid.Row="5"
+                        Grid.Column="0"
+                        Margin="{StaticResource Margin4}"
+                        VerticalAlignment="Center"
+                        Text="{x:Static resx:ResUI.TbWarp}" />
+                    <Button
+                        Grid.Row="5"
+                        Grid.Column="1"
+                        Margin="{StaticResource MarginLr4}"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Classes="IconButton">
+                        <Button.Content>
+                            <PathIcon Data="{StaticResource SemiIconMore}">
+                                <PathIcon.RenderTransform>
+                                    <RotateTransform Angle="90" />
+                                </PathIcon.RenderTransform>
+                            </PathIcon>
+                        </Button.Content>
+                        <Button.Flyout>
+                            <Flyout>
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="{StaticResource Margin4}"
+                                        VerticalAlignment="Center"
+                                        FontWeight="Bold"
+                                        Text="{x:Static resx:ResUI.TbXrayOnly}" />
+                                    <TextBlock
+                                        Margin="{StaticResource Margin4}"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Static resx:ResUI.TbPrivateKey}" />
+                                    <TextBox
+                                        x:Name="txtWarpPrivateKey"
+                                        Width="400"
+                                        Margin="{StaticResource Margin4}" />
+                                    <TextBlock
+                                        Margin="{StaticResource Margin4}"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Static resx:ResUI.TbPublicKey}" />
+                                    <TextBox
+                                        x:Name="txtWarpPublicKey"
+                                        Width="400"
+                                        Margin="{StaticResource Margin4}" />
+                                    <TextBlock
+                                        Margin="{StaticResource Margin4}"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Static resx:ResUI.TbLocalAddress}" />
+                                    <TextBox
+                                        x:Name="txtWarpAddress"
+                                        Width="400"
+                                        Margin="{StaticResource Margin4}"
+                                        PlaceholderText="Ipv4, Ipv6" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                </Grid>
+
                 <Separator
                     x:Name="sepa2"
                     Grid.Row="3"
@@ -690,128 +913,413 @@
                 <Grid
                     x:Name="gridTransport"
                     Grid.Row="4"
-                    ColumnDefinitions="300,Auto,Auto"
-                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    RowDefinitions="Auto,Auto,Auto">
 
                     <TextBlock
                         Grid.Row="0"
-                        Grid.ColumnSpan="2"
                         Margin="{StaticResource Margin4}"
                         Text="{x:Static resx:ResUI.GbTransport}" />
 
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbNetwork}" />
-                    <ComboBox
-                        x:Name="cmbNetwork"
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Width="200"
-                        Margin="{StaticResource Margin4}" />
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="2"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TipNetwork}" />
-
-                    <TextBlock
-                        x:Name="labHeaderType"
-                        Grid.Row="2"
-                        Grid.Column="0"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbHeaderType}" />
-                    <StackPanel
-                        Grid.Row="2"
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        Orientation="Horizontal">
+                    <Grid Grid.Row="1" ColumnDefinitions="300,Auto,Auto">
+                        <TextBlock
+                            Grid.Column="0"
+                            Margin="{StaticResource Margin4}"
+                            VerticalAlignment="Center"
+                            Text="{x:Static resx:ResUI.TbNetwork}" />
                         <ComboBox
-                            x:Name="cmbHeaderType"
+                            x:Name="cmbNetwork"
+                            Grid.Column="1"
                             Width="200"
                             Margin="{StaticResource Margin4}" />
+                        <TextBlock
+                            Grid.Column="2"
+                            Margin="{StaticResource Margin4}"
+                            VerticalAlignment="Center"
+                            Text="{x:Static resx:ResUI.TipNetwork}" />
+                    </Grid>
 
-                        <Button
-                            x:Name="btnExtra"
-                            Margin="{StaticResource MarginLr8}"
-                            Classes="IconButton">
-                            <Button.Content>
-                                <PathIcon Data="{StaticResource SemiIconMore}">
-                                    <PathIcon.RenderTransform>
-                                        <RotateTransform Angle="90" />
-                                    </PathIcon.RenderTransform>
-                                </PathIcon>
-                            </Button.Content>
-                            <Button.Flyout>
-                                <Flyout>
-                                    <StackPanel>
-                                        <TextBlock
-                                            Margin="{StaticResource Margin4}"
-                                            VerticalAlignment="Center"
-                                            Text="{x:Static resx:ResUI.TransportExtraTip}" />
-                                        <views:JsonEditor
-                                            x:Name="txtExtra"
-                                            Width="400"
-                                            MinHeight="100"
-                                            Margin="{StaticResource Margin4}"
-                                            HorizontalAlignment="Stretch"
-                                            VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Flyout>
-                            </Button.Flyout>
-                        </Button>
-                    </StackPanel>
-                    <TextBlock
-                        x:Name="tipHeaderType"
-                        Grid.Row="2"
-                        Grid.Column="2"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbHeaderType}" />
+                    <Grid Grid.Row="2">
+                        <Grid
+                            x:Name="gridTransportRaw"
+                            IsVisible="False"
+                            RowDefinitions="Auto,Auto">
+                            <Grid Grid.Row="0" ColumnDefinitions="300,Auto">
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Margin="{StaticResource Margin4}"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Static resx:ResUI.TransportHeaderType1}" />
+                                <ComboBox
+                                    x:Name="cmbHeaderTypeRaw"
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Width="200"
+                                    Margin="{StaticResource Margin4}" />
+                            </Grid>
 
-                    <TextBlock
-                        Grid.Row="3"
-                        Grid.Column="0"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbRequestHost}" />
-                    <TextBox
-                        x:Name="txtRequestHost"
-                        Grid.Row="3"
-                        Grid.Column="1"
-                        Width="400"
-                        Margin="{StaticResource Margin4}" />
-                    <TextBlock
-                        x:Name="tipRequestHost"
-                        Grid.Row="3"
-                        Grid.Column="2"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbRequestHost}" />
+                            <Grid
+                                x:Name="gridTransportRawHttp"
+                                Grid.Row="1"
+                                ColumnDefinitions="300,Auto"
+                                IsVisible="False"
+                                RowDefinitions="Auto,Auto">
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Margin="{StaticResource Margin4}"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Static resx:ResUI.TbCamouflageDomain}" />
+                                <TextBox
+                                    x:Name="txtRequestHostRaw"
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Width="400"
+                                    Margin="{StaticResource Margin4}" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Margin="{StaticResource Margin4}"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Static resx:ResUI.TbPath}" />
+                                <TextBox
+                                    x:Name="txtPathRaw"
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Width="400"
+                                    Margin="{StaticResource Margin4}" />
+                            </Grid>
+                        </Grid>
 
-                    <TextBlock
-                        Grid.Row="4"
-                        Grid.Column="0"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbPath}" />
-                    <TextBox
-                        x:Name="txtPath"
-                        Grid.Row="4"
-                        Grid.Column="1"
-                        Width="400"
-                        Margin="{StaticResource Margin4}" />
-                    <TextBlock
-                        x:Name="tipPath"
-                        Grid.Row="4"
-                        Grid.Column="2"
-                        Margin="{StaticResource Margin4}"
-                        VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbPath}" />
+                        <Grid
+                            x:Name="gridTransportXhttp"
+                            ColumnDefinitions="300,Auto"
+                            IsVisible="False"
+                            RowDefinitions="Auto,Auto,Auto,Auto">
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TransportHeaderType5}" />
+                            <ComboBox
+                                x:Name="cmbHeaderTypeXhttp"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Width="200"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TbHost}" />
+                            <TextBox
+                                x:Name="txtRequestHostXhttp"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TbPath}" />
+                            <TextBox
+                                x:Name="txtPathXhttp"
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="3"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Top"
+                                Text="{x:Static resx:ResUI.TransportExtra}"
+                                TextWrapping="Wrap" />
+                            <Expander
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                IsExpanded="True">
+                                <Expander.Header>
+                                    <TextBlock FontWeight="Normal" Text="{x:Static resx:ResUI.TransportExtraTip}" />
+                                </Expander.Header>
+                                <views:JsonEditor x:Name="txtExtraXhttp" HorizontalAlignment="Stretch" />
+                            </Expander>
+                        </Grid>
+
+                        <Grid
+                            x:Name="gridTransportXdrive"
+                            ColumnDefinitions="300,Auto"
+                            IsVisible="False"
+                            RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.XdriveProvider}" />
+                            <ComboBox
+                                x:Name="cmbProviderXdrive"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Width="250"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.XdriveService}" />
+                            <ComboBox
+                                x:Name="cmbServiceXdrive"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Width="200"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.XdriveRemoteFolder}" />
+                            <TextBox
+                                x:Name="txtRemoteFolderXdrive"
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="3"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.XdriveSecrets}" />
+                            <TextBox
+                                x:Name="txtSecretsXdrive"
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.XdriveS3Endpoint}" />
+                            <TextBox
+                                x:Name="txtEndpointXdrive"
+                                Grid.Row="4"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="5"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.XdriveS3Bucket}" />
+                            <TextBox
+                                x:Name="txtBucketXdrive"
+                                Grid.Row="5"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="6"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.XdriveS3Region}" />
+                            <TextBox
+                                x:Name="txtRegionXdrive"
+                                Grid.Row="6"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="7"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.XdriveS3PathStyle}" />
+                            <ToggleSwitch
+                                x:Name="togPathStyleXdrive"
+                                Grid.Row="7"
+                                Grid.Column="1"
+                                Margin="{StaticResource Margin4}"
+                                HorizontalAlignment="Left" />
+                            <TextBlock
+                                Grid.Row="8"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Top"
+                                Text="{x:Static resx:ResUI.XdriveExtra}"
+                                TextWrapping="Wrap" />
+                            <Expander
+                                Grid.Row="8"
+                                Grid.Column="1"
+                                IsExpanded="False">
+                                <Expander.Header>
+                                    <TextBlock FontWeight="Normal" Text="{x:Static resx:ResUI.XdriveExtraTip}" />
+                                </Expander.Header>
+                                <views:JsonEditor x:Name="txtExtraXdrive" HorizontalAlignment="Stretch" />
+                            </Expander>
+                        </Grid>
+
+                        <Grid
+                            x:Name="gridTransportKcp"
+                            ColumnDefinitions="300,Auto"
+                            IsVisible="False"
+                            RowDefinitions="Auto,Auto,Auto">
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TransportHeaderType2}" />
+                            <ComboBox
+                                x:Name="cmbHeaderTypeKcp"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Width="200"
+                                Margin="{StaticResource Margin4}"
+                                HorizontalAlignment="Left" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TbMtu}" />
+                            <TextBox
+                                x:Name="txtKcpMtu"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Width="200"
+                                Margin="{StaticResource Margin4}"
+                                HorizontalAlignment="Left" />
+                            <TextBlock
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="Seed" />
+                            <TextBox
+                                x:Name="txtKcpSeed"
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}"
+                                HorizontalAlignment="Left" />
+                        </Grid>
+
+                        <Grid
+                            x:Name="gridTransportGrpc"
+                            ColumnDefinitions="300,Auto"
+                            IsVisible="False"
+                            RowDefinitions="Auto,Auto,Auto">
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TransportHeaderType4}" />
+                            <ComboBox
+                                x:Name="cmbHeaderTypeGrpc"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Width="200"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TransportRequestHostTip5}" />
+                            <TextBox
+                                x:Name="txtRequestHostGrpc"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TransportPathTip4}" />
+                            <TextBox
+                                x:Name="txtPathGrpc"
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                        </Grid>
+
+                        <Grid
+                            x:Name="gridTransportWs"
+                            ColumnDefinitions="300,Auto"
+                            IsVisible="False"
+                            RowDefinitions="Auto,Auto">
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TbHost}" />
+                            <TextBox
+                                x:Name="txtRequestHostWs"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TbPath}" />
+                            <TextBox
+                                x:Name="txtPathWs"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                        </Grid>
+
+                        <Grid
+                            x:Name="gridTransportHttpupgrade"
+                            ColumnDefinitions="300,Auto"
+                            IsVisible="False"
+                            RowDefinitions="Auto,Auto">
+                            <TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TbHost}" />
+                            <TextBox
+                                x:Name="txtRequestHostHttpupgrade"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                            <TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="{StaticResource Margin4}"
+                                VerticalAlignment="Center"
+                                Text="{x:Static resx:ResUI.TbPath}" />
+                            <TextBox
+                                x:Name="txtPathHttpupgrade"
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Width="400"
+                                Margin="{StaticResource Margin4}" />
+                        </Grid>
+                    </Grid>
                 </Grid>
 
                 <Grid
@@ -880,7 +1388,7 @@
                     Grid.Row="8"
                     ColumnDefinitions="300,Auto"
                     IsVisible="False"
-                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
 
                     <TextBlock
                         Grid.Row="1"
@@ -907,7 +1415,8 @@
                         Grid.Row="2"
                         Grid.Column="1"
                         Width="200"
-                        Margin="{StaticResource Margin4}" />
+                        Margin="{StaticResource Margin4}"
+                        IsEditable="True" />
 
                     <TextBlock
                         Grid.Row="3"
@@ -920,7 +1429,8 @@
                         Grid.Row="3"
                         Grid.Column="1"
                         Width="200"
-                        Margin="{StaticResource Margin4}" />
+                        Margin="{StaticResource Margin4}"
+                        IsEditable="True" />
 
                     <TextBlock
                         Grid.Row="4"
@@ -928,12 +1438,12 @@
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
                         Text="{x:Static resx:ResUI.TbAllowInsecure}" />
-                    <ComboBox
-                        x:Name="cmbAllowInsecure"
+                    <ToggleSwitch
+                        x:Name="togAllowInsecure"
                         Grid.Row="4"
                         Grid.Column="1"
-                        Width="200"
-                        Margin="{StaticResource Margin4}" />
+                        Margin="{StaticResource Margin4}"
+                        HorizontalAlignment="Left" />
 
                     <TextBlock
                         Grid.Row="5"
@@ -954,13 +1464,14 @@
                         Grid.Column="0"
                         Margin="{StaticResource Margin4}"
                         VerticalAlignment="Center"
-                        Text="{x:Static resx:ResUI.TbEchForceQuery}" />
-                    <ComboBox
-                        x:Name="cmbEchForceQuery"
+                        Text="{x:Static resx:ResUI.TbVerifyPeerCertByName}" />
+                    <TextBox
+                        x:Name="txtVerifyPeerCertByName"
                         Grid.Row="6"
                         Grid.Column="1"
-                        Width="200"
-                        Margin="{StaticResource Margin4}" />
+                        Width="400"
+                        Margin="{StaticResource Margin4}"
+                        HorizontalAlignment="Left" />
 
                     <TextBlock
                         Grid.Row="7"
@@ -1012,8 +1523,10 @@
                                             Width="400"
                                             Margin="{StaticResource Margin4}"
                                             VerticalAlignment="Center"
-                                            Text="{x:Static resx:ResUI.TbCertSha256Tips}"
-                                            TextWrapping="Wrap" />
+                                            TextWrapping="Wrap">
+                                            <Run Text="{x:Static resx:ResUI.TbCertSha256Tips}" />
+                                            <Run FontWeight="Bold" Text="{x:Static resx:ResUI.TbXrayOnly}" />
+                                        </TextBlock>
                                         <TextBox
                                             x:Name="txtCertSha256Pinning"
                                             Width="400"
@@ -1070,7 +1583,8 @@
                         Grid.Row="1"
                         Grid.Column="1"
                         Width="200"
-                        Margin="{StaticResource Margin4}" />
+                        Margin="{StaticResource Margin4}"
+                        IsEditable="True" />
 
                     <TextBlock
                         Grid.Row="2"
